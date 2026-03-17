@@ -213,15 +213,19 @@ tbody tr:hover { background:var(--surface2); }
       <div class="table-wrap">
         <div class="table-toolbar">
           <h3>전체 종목 (<span id="allCount">0</span>) <span style="font-size:11px;font-weight:400;color:var(--text2);margin-left:8px;">최종 업데이트: <span id="lastUpdate"></span></span></h3>
-          <div class="filter-tabs">
-            <div class="filter-tab active" onclick="filterTable('all',this)">전체</div>
-            <div class="filter-tab" onclick="filterTable('completed',this)">완료</div>
-            <div class="filter-tab" onclick="filterTable('holding',this)">보유중</div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <div id="portfolioIlimToggles" style="display:flex;gap:6px;"></div>
+            <span style="color:var(--border);font-size:11px;">|</span>
+            <div class="filter-tabs">
+              <div class="filter-tab active" onclick="filterTable('all',this)">전체</div>
+              <div class="filter-tab" onclick="filterTable('completed',this)">완료</div>
+              <div class="filter-tab" onclick="filterTable('holding',this)">보유중</div>
+            </div>
           </div>
         </div>
         <div class="table-scroll">
           <table><thead><tr>
-            <th>#</th><th>종목명</th><th>주간사</th><th>공모단가</th><th>배정수량</th><th>배정금액</th><th>투자총액</th><th>상장일</th><th>락업</th><th>보유</th><th>실현손익</th><th>평가손익</th><th>총손익</th><th>수익률</th><th>상태</th>
+            <th>#</th><th>일임</th><th>종목명</th><th>주간사</th><th>공모단가</th><th>배정수량</th><th>배정금액</th><th>투자총액</th><th>상장일</th><th>락업</th><th>보유</th><th>실현손익</th><th>평가손익</th><th>총손익</th><th>수익률</th><th>상태</th>
           </tr></thead><tbody id="tableBody"></tbody></table>
         </div>
       </div>
@@ -229,18 +233,24 @@ tbody tr:hover { background:var(--surface2); }
 
     <!-- 보유 종목 -->
     <div id="page-holding" class="page">
-      <div class="page-header"><h2>보유 종목</h2><p>현재 보유 중인 종목</p></div>
+      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
+        <div><h2>보유 종목</h2><p>현재 보유 중인 종목</p></div>
+        <div id="holdingIlimToggles" style="display:flex;gap:6px;"></div>
+      </div>
       <div id="holdingArea"></div>
     </div>
 
     <!-- 완료 종목 -->
     <div id="page-completed" class="page">
-      <div class="page-header"><h2>완료 종목</h2><p>매도 완료된 종목</p></div>
+      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
+        <div><h2>완료 종목</h2><p>매도 완료된 종목</p></div>
+        <div id="compIlimToggles" style="display:flex;gap:6px;"></div>
+      </div>
       <div class="table-wrap">
         <div class="table-toolbar"><h3>완료 종목 (<span id="compCount">0</span>)</h3></div>
         <div class="table-scroll">
           <table><thead><tr>
-            <th>#</th><th>종목명</th><th>공모단가</th><th>배정금액</th><th>실현손익</th><th>수익률</th>
+            <th>#</th><th>일임</th><th>종목명</th><th>공모단가</th><th>배정금액</th><th>실현손익</th><th>수익률</th>
           </tr></thead><tbody id="compBody"></tbody></table>
         </div>
       </div>
@@ -381,15 +391,17 @@ function renderChecklist() {
 const LAST_UPDATE = '2026-03-17';
 function renderTable() {
   const body = document.getElementById('tableBody');
-  document.getElementById('allCount').textContent = DATA.length;
+  const filtered = getFilteredData('portfolio');
+  document.getElementById('allCount').textContent = filtered.length;
   document.getElementById('lastUpdate').textContent = LAST_UPDATE;
-  body.innerHTML = DATA.map(d => {
+  body.innerHTML = filtered.map(d => {
     const st = getStatus(d);
     const stLabel = st==='completed' ? '완료' : st==='lockup' ? '락업중' : st==='sellable' ? '매도가능' : st==='waiting' ? '상장대기' : '상장일';
     const stClass = st==='completed' ? 'completed' : st==='lockup' || st==='sellable' ? 'holding' : 'waiting';
     const pnlClass = (d.totalPnl||0) >= 0 ? 'pnl-pos' : 'pnl-neg';
+    const ilimShort = (d.ilim||'').replace('일임','');
     return `<tr data-status="${st}">
-      <td>${d.seq}</td><td>${d.name}</td><td>${d.broker}</td>
+      <td>${d.seq}</td><td><span class="tag tag-blue" style="font-size:9px;">${ilimShort}</span></td><td>${d.name}</td><td>${d.broker}</td>
       <td class="num">${fmt(d.price)}</td><td class="num">${fmt(d.qty)}</td>
       <td class="num">${fmt(d.alloc)}</td><td class="num">${fmt(d.total)}</td>
       <td>${d.listing}</td><td>${d.lockup}</td><td class="num">${d.holding||'-'}</td>
@@ -415,7 +427,7 @@ function filterTable(f, el) {
 
 function renderHolding() {
   const area = document.getElementById('holdingArea');
-  const holding = DATA.filter(d => d.holding);
+  const holding = getFilteredData('holding').filter(d => d.holding);
   if(!holding.length) { area.innerHTML = '<div class="checklist-section"><div class="checklist-title">현재 보유 중인 종목이 없습니다</div></div>'; return; }
   area.innerHTML = holding.map(d => `
     <div class="checklist-section">
@@ -432,13 +444,16 @@ function renderHolding() {
 }
 
 function renderCompleted() {
-  const comp = DATA.filter(d => !d.holding && d.realized);
+  const comp = getFilteredData('completed').filter(d => !d.holding && d.realized);
   document.getElementById('compCount').textContent = comp.length;
-  document.getElementById('compBody').innerHTML = comp.map(d => `<tr>
-    <td>${d.seq}</td><td>${d.name}</td><td class="num">${fmt(d.price)}</td>
+  document.getElementById('compBody').innerHTML = comp.map(d => {
+    const ilimShort = (d.ilim||'').replace('일임','');
+    return `<tr>
+    <td>${d.seq}</td><td><span class="tag tag-blue" style="font-size:9px;">${ilimShort}</span></td><td>${d.name}</td><td class="num">${fmt(d.price)}</td>
     <td class="num">${fmt(d.alloc)}</td><td class="num pnl-pos">${fmt(d.realized)}</td>
     <td class="num">${d.returnRate}</td>
-  </tr>`).join('');
+  </tr>`;
+  }).join('');
 }
 
 const CAL_EVENTS = [
@@ -453,33 +468,50 @@ const CAL_EVENTS = [
   {date:'2026-03-20',ilim:'블랙보드일임',title:'[블랙보드일임/상장및매도가능일] 아이엠바이오로직스',type:'blue',desc:'공모가 26,000원 / 19주'},
 ];
 
-const ilimFilter = {};
-function initIlimToggles() {
-  const ilims = [...new Set(CAL_EVENTS.map(e => e.ilim))];
-  // 마크일임도 기본 등록 (데이터 없어도 토글 표시)
-  if(!ilims.includes('마크일임')) ilims.push('마크일임');
-  ilims.forEach(il => ilimFilter[il] = true);
-  renderIlimToggles();
+// 페이지별 일임 필터 상태
+const ilimFilter = {cal:{},portfolio:{},holding:{},completed:{}};
+const ALL_ILIMS = ['블랙보드일임','마크일임'];
+
+function initAllIlimToggles() {
+  ALL_ILIMS.forEach(il => {
+    ilimFilter.cal[il] = true;
+    ilimFilter.portfolio[il] = true;
+    ilimFilter.holding[il] = true;
+    ilimFilter.completed[il] = true;
+  });
+  renderPageToggles('cal','ilimToggles');
+  renderPageToggles('portfolio','portfolioIlimToggles');
+  renderPageToggles('holding','holdingIlimToggles');
+  renderPageToggles('completed','compIlimToggles');
 }
-function renderIlimToggles() {
-  const area = document.getElementById('ilimToggles');
-  area.innerHTML = Object.keys(ilimFilter).map(il => {
-    const on = ilimFilter[il];
+
+function renderPageToggles(page, areaId) {
+  const area = document.getElementById(areaId);
+  if(!area) return;
+  area.innerHTML = ALL_ILIMS.map(il => {
+    const on = ilimFilter[page][il];
     const color = ILIM_COLORS[il] || '#60a5fa';
-    return `<div class="ilim-toggle ${on?'on':'off'}" onclick="toggleIlim('${il}')" style="background:${on?color+'22':'var(--surface2)'};border-color:${on?color:'var(--border)'};color:${on?color:'var(--text2)'};">
+    return `<div class="ilim-toggle ${on?'on':'off'}" onclick="togglePageIlim('${page}','${il}')" style="background:${on?color+'22':'var(--surface2)'};border-color:${on?color:'var(--border)'};color:${on?color:'var(--text2)'};">
       <span style="width:8px;height:8px;border-radius:50%;background:${on?color:'var(--text2)'};display:inline-block;"></span>
       ${il.replace('일임','')}
     </div>`;
   }).join('');
 }
-function toggleIlim(il) {
-  ilimFilter[il] = !ilimFilter[il];
-  renderIlimToggles();
-  renderCalGrid();
-  renderCalList();
+
+function togglePageIlim(page, il) {
+  ilimFilter[page][il] = !ilimFilter[page][il];
+  renderPageToggles(page, page==='cal'?'ilimToggles':page==='portfolio'?'portfolioIlimToggles':page==='holding'?'holdingIlimToggles':'compIlimToggles');
+  if(page==='cal') { renderCalGrid(); renderCalList(); }
+  else if(page==='portfolio') { renderTable(); }
+  else if(page==='holding') { renderHolding(); }
+  else if(page==='completed') { renderCompleted(); }
 }
+
 function getFilteredEvents() {
-  return CAL_EVENTS.filter(e => ilimFilter[e.ilim] !== false);
+  return CAL_EVENTS.filter(e => ilimFilter.cal[e.ilim] !== false);
+}
+function getFilteredData(page) {
+  return DATA.filter(d => ilimFilter[page][d.ilim] !== false);
 }
 
 let calYear = today.getFullYear(), calMonth = today.getMonth();
@@ -553,7 +585,7 @@ document.getElementById('todayDate').textContent = `${todayStr} (${weekday})`;
 renderStats();
 renderIlimSummary();
 renderChecklist();
-initIlimToggles();
+initAllIlimToggles();
 renderTable();
 renderHolding();
 renderCompleted();
