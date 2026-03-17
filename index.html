@@ -179,7 +179,7 @@ tbody tr:hover { background:var(--surface2); }
     <div id="page-today" class="page active">
       <div class="page-header">
         <h2>오늘의 할일</h2>
-        <p id="todayDate"></p>
+        <p><span id="todayDate"></span> <span style="margin-left:12px;font-size:11px;color:var(--text2);">데이터 최종 업데이트: <span id="lastUpdateToday"></span></span></p>
       </div>
       <div class="stats-row">
         <div class="stat-card"><div class="stat-label">총 투자금액</div><div class="stat-value blue" id="totalInvest">-</div></div>
@@ -397,12 +397,13 @@ function renderChecklist() {
   document.getElementById('todayBadge').textContent = taskCount;
 }
 
-const LAST_UPDATE = '2026-03-17';
+const LAST_UPDATE = '2026-03-17 17:10';
 function renderTable() {
   const body = document.getElementById('tableBody');
   const filtered = getFilteredData('portfolio');
   document.getElementById('allCount').textContent = filtered.length;
   document.getElementById('lastUpdate').textContent = LAST_UPDATE;
+  document.getElementById('lastUpdateToday').textContent = LAST_UPDATE;
   body.innerHTML = filtered.map(d => {
     const st = getStatus(d);
     const stLabel = st==='completed' ? '완료' : st==='lockup' ? '락업중' : st==='sellable' ? '매도가능' : st==='waiting' ? '상장대기' : '상장일';
