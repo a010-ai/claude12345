@@ -232,7 +232,7 @@ tbody tr:hover { background:var(--surface2); }
 
     <!-- 캘린더 -->
     <div id="page-calendar" class="page">
-      <div class="page-header"><h2>구글캘린더 일정</h2><p>등록된 IPO 일정 현황</p></div>
+      <div class="page-header"><h2>구글캘린더 일정</h2><p>등록된 IPO 일정 현황 <span style="margin-left:12px;font-size:11px;color:var(--text2);">데이터 최종 업데이트: <span id="lastUpdateCal"></span></span></p></div>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
         <button onclick="calPrev()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;">&larr;</button>
         <h3 id="calMonthTitle" style="font-size:16px;font-weight:700;min-width:120px;text-align:center;"></h3>
@@ -448,13 +448,14 @@ function renderChecklist() {
   document.getElementById('todayBadge').textContent = taskCount;
 }
 
-const LAST_UPDATE = '2026-03-17 23:37';
+const LAST_UPDATE = '2026-03-17 23:41';
 function renderTable() {
   const body = document.getElementById('tableBody');
   const filtered = getFilteredData('portfolio');
   document.getElementById('allCount').textContent = filtered.length;
   document.getElementById('lastUpdate').textContent = LAST_UPDATE;
   document.getElementById('lastUpdateToday').textContent = LAST_UPDATE;
+  document.getElementById('lastUpdateCal').textContent = LAST_UPDATE;
   body.innerHTML = filtered.map(d => {
     const st = getStatus(d);
     const stLabel = st==='completed' ? '완료' : st==='lockup' ? '락업중' : st==='sellable' ? '매도가능' : st==='waiting' ? '상장대기' : '상장일';
@@ -524,16 +525,17 @@ function renderCompleted() {
 }
 
 const CAL_EVENTS = [
-  {date:'2025-12-10',ilim:'블랙보드일임',title:'[블랙보드일임/청약] 페스카로 주금납입',type:'yellow',desc:'이체금액 2,035,150원'},
-  {date:'2025-12-10',ilim:'블랙보드일임',title:'[블랙보드일임/상장및매도가능일] 페스카로',type:'blue',desc:'미확약 / 상장당일 매도'},
-  {date:'2025-12-24',ilim:'블랙보드일임',title:'[블랙보드일임/청약] 세미파이브 주금납입',type:'yellow',desc:'이체금액 20,434,320원'},
-  {date:'2025-12-24',ilim:'블랙보드일임',title:'[블랙보드일임/상장] 세미파이브',type:'blue',desc:'락업 1개월'},
-  {date:'2026-01-29',ilim:'블랙보드일임',title:'[블랙보드일임/매도가능일] 세미파이브',type:'blue',desc:'락업해제'},
+  {date:'2026-02-26',ilim:'블랙보드일임',title:'[블랙보드일임/청약] 에스팀 주금납입',type:'yellow',desc:'이체금액 214,625원'},
+  {date:'2026-02-26',ilim:'블랙보드일임',title:'[블랙보드일임/청약] 엑스비스 주금납입',type:'yellow',desc:'이체금액 2,206,850원'},
+  {date:'2026-03-06',ilim:'블랙보드일임',title:'[블랙보드일임/상장및매도가능일] 에스팀',type:'blue',desc:'미확약 / 상장당일 매도'},
   {date:'2026-03-06',ilim:'블랙보드일임',title:'[블랙보드일임/매도완료] 에스팀',type:'blue',desc:'매도단가 34,000원 / 297.9%'},
+  {date:'2026-03-09',ilim:'블랙보드일임',title:'[블랙보드일임/상장] 엑스비스',type:'blue',desc:'락업 1개월 / 매매가능일 2026.04.09'},
   {date:'2026-03-10',ilim:'블랙보드일임',title:'[블랙보드일임/수도결제] 에스팀',type:'orange',desc:'T+2 수도대금결제'},
   {date:'2026-03-16',ilim:'블랙보드일임',title:'[블랙보드일임/청약] 아이엠바이오로직스 주금납입',type:'yellow',desc:'이체금액 498,940원'},
   {date:'2026-03-20',ilim:'블랙보드일임',title:'[블랙보드일임/상장및매도가능일] 아이엠바이오로직스',type:'blue',desc:'공모가 26,000원 / 19주'},
-  {date:'2026-03-27',ilim:'블랙보드일임',title:'[블랙보드일임/상장및매도가능일] 엔에이치기업인수목적33호',type:'blue',desc:'공모가 2,000원 / 1,590주'},
+  {date:'2026-03-20',ilim:'블랙보드일임',title:'[블랙보드일임/청약] 엔에이치기업인수목적 33호 주금납입',type:'yellow',desc:'이체금액 3,211,800원'},
+  {date:'2026-03-27',ilim:'블랙보드일임',title:'[블랙보드일임/상장및매도가능일] 엔에이치기업인수목적 33호',type:'blue',desc:'공모가 2,000원 / 1,590주'},
+  {date:'2026-04-09',ilim:'블랙보드일임',title:'[블랙보드일임/매도가능일] 엑스비스',type:'blue',desc:'락업 1개월 해제'},
 ];
 
 // 페이지별 일임 필터 상태
