@@ -118,6 +118,20 @@ tbody tr:hover { background:var(--surface2); }
 .ilim-mini-table td { padding:4px 6px; font-family:'JetBrains Mono',monospace; font-size:11px; }
 .ilim-mini-table td.r { text-align:right; }
 .ilim-section-title { font-size:13px; font-weight:700; color:var(--text2); margin-bottom:10px; padding-left:4px; border-left:3px solid var(--accent); padding-left:10px; }
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+.cal-grid .cal-hdr { background:var(--surface2); padding:8px 4px; text-align:center; font-size:11px; font-weight:600; color:var(--text2); }
+.cal-grid .cal-hdr.sun { color:var(--red); }
+.cal-grid .cal-hdr.sat { color:var(--accent2); }
+.cal-grid .cal-day { background:var(--surface); min-height:72px; padding:4px 6px; position:relative; }
+.cal-grid .cal-day.other { opacity:0.3; }
+.cal-grid .cal-day.today { background:var(--surface2); box-shadow:inset 0 0 0 2px var(--accent); border-radius:2px; }
+.cal-day-num { font-size:11px; font-weight:600; margin-bottom:3px; }
+.cal-day-num.sun { color:var(--red); }
+.cal-day-num.sat { color:var(--accent2); }
+.cal-dot { font-size:9px; line-height:1.4; padding:1px 4px; border-radius:3px; margin-bottom:1px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; display:block; cursor:default; }
+.cal-dot.yellow { background:var(--yellow-bg); color:var(--yellow); }
+.cal-dot.blue { background:var(--blue-bg); color:var(--accent2); }
+.cal-dot.orange { background:var(--orange-bg); color:var(--orange); }
 </style>
 </head>
 <body>
@@ -177,6 +191,14 @@ tbody tr:hover { background:var(--surface2); }
     <!-- 캘린더 -->
     <div id="page-calendar" class="page">
       <div class="page-header"><h2>구글캘린더 일정</h2><p>등록된 IPO 일정 현황</p></div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <button onclick="calPrev()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;">&larr;</button>
+        <h3 id="calMonthTitle" style="font-size:16px;font-weight:700;min-width:120px;text-align:center;"></h3>
+        <button onclick="calNext()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;">&rarr;</button>
+        <button onclick="calToday()" style="background:var(--blue-bg);border:1px solid var(--accent);color:var(--accent2);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;margin-left:4px;">오늘</button>
+      </div>
+      <div id="calGrid" style="margin-bottom:24px;"></div>
+      <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;">일정 목록</h3>
       <div id="calendarArea" class="cal-events"></div>
     </div>
 
@@ -412,20 +434,83 @@ function renderCompleted() {
   </tr>`).join('');
 }
 
-function renderCalendar() {
-  const events = [
-    {date:'03/06', title:'[블랙보드일임/매도완료] 에스팀', type:'blue', desc:'매도단가 34,000원 / 수익률 297.9%'},
-    {date:'03/10', title:'[블랙보드일임/수도결제] 에스팀', type:'orange', desc:'T+2 수도대금결제'},
-    {date:'03/16', title:'[블랙보드일임/청약] 아이엠바이오로직스 주금납입', type:'yellow', desc:'이체금액 498,940원'},
-    {date:'03/20', title:'[블랙보드일임/상장및매도가능일] 아이엠바이오로직스', type:'blue', desc:'공모가 26,000원 / 19주'},
-  ];
-  document.getElementById('calendarArea').innerHTML = events.map(e => `
-    <div class="cal-event ${e.type}">
-      <div class="cal-date">${e.date}</div>
-      <div><div class="cal-title">${e.title}</div><div class="cal-desc">${e.desc}</div></div>
-    </div>
-  `).join('');
+const CAL_EVENTS = [
+  {date:'2025-12-10',title:'[블랙보드일임/청약] 페스카로 주금납입',type:'yellow',desc:'이체금액 2,035,150원'},
+  {date:'2025-12-10',title:'[블랙보드일임/상장및매도가능일] 페스카로',type:'blue',desc:'미확약 / 상장당일 매도'},
+  {date:'2025-12-24',title:'[블랙보드일임/청약] 세미파이브 주금납입',type:'yellow',desc:'이체금액 20,434,320원'},
+  {date:'2025-12-24',title:'[블랙보드일임/상장] 세미파이브',type:'blue',desc:'락업 1개월'},
+  {date:'2026-01-29',title:'[블랙보드일임/매도가능일] 세미파이브',type:'blue',desc:'락업해제'},
+  {date:'2026-03-06',title:'[블랙보드일임/매도완료] 에스팀',type:'blue',desc:'매도단가 34,000원 / 297.9%'},
+  {date:'2026-03-10',title:'[블랙보드일임/수도결제] 에스팀',type:'orange',desc:'T+2 수도대금결제'},
+  {date:'2026-03-16',title:'[블랙보드일임/청약] 아이엠바이오로직스 주금납입',type:'yellow',desc:'이체금액 498,940원'},
+  {date:'2026-03-20',title:'[블랙보드일임/상장및매도가능일] 아이엠바이오로직스',type:'blue',desc:'공모가 26,000원 / 19주'},
+];
+
+let calYear = today.getFullYear(), calMonth = today.getMonth();
+
+function calPrev() { calMonth--; if(calMonth<0){calMonth=11;calYear--;} renderCalGrid(); renderCalList(); }
+function calNext() { calMonth++; if(calMonth>11){calMonth=0;calYear++;} renderCalGrid(); renderCalList(); }
+function calToday() { calYear=today.getFullYear(); calMonth=today.getMonth(); renderCalGrid(); renderCalList(); }
+
+function renderCalGrid() {
+  document.getElementById('calMonthTitle').textContent = `${calYear}년 ${calMonth+1}월`;
+  const first = new Date(calYear, calMonth, 1);
+  const last = new Date(calYear, calMonth+1, 0);
+  const startDay = first.getDay();
+  const days = last.getDate();
+  const prevLast = new Date(calYear, calMonth, 0).getDate();
+
+  const hdrs = ['일','월','화','수','목','금','토'];
+  let html = '<div class="cal-grid">';
+  hdrs.forEach((h,i) => html += `<div class="cal-hdr ${i===0?'sun':i===6?'sat':''}">${h}</div>`);
+
+  // prev month
+  for(let i=startDay-1; i>=0; i--) {
+    html += `<div class="cal-day other"><div class="cal-day-num">${prevLast-i}</div></div>`;
+  }
+  // this month
+  for(let d=1; d<=days; d++) {
+    const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dow = new Date(calYear, calMonth, d).getDay();
+    const isToday = ds === todayStr;
+    const evts = CAL_EVENTS.filter(e => e.date === ds);
+    html += `<div class="cal-day ${isToday?'today':''}">`;
+    html += `<div class="cal-day-num ${dow===0?'sun':dow===6?'sat':''}">${d}</div>`;
+    evts.forEach(e => {
+      const short = e.title.replace(/\[.*?\//, '').replace(']','').trim();
+      html += `<span class="cal-dot ${e.type}" title="${e.title}">${short}</span>`;
+    });
+    html += '</div>';
+  }
+  // next month
+  const totalCells = startDay + days;
+  const remain = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
+  for(let i=1; i<=remain; i++) {
+    html += `<div class="cal-day other"><div class="cal-day-num">${i}</div></div>`;
+  }
+  html += '</div>';
+  document.getElementById('calGrid').innerHTML = html;
 }
+
+function renderCalList() {
+  const prefix = `${calYear}-${String(calMonth+1).padStart(2,'0')}`;
+  const monthEvts = CAL_EVENTS.filter(e => e.date.startsWith(prefix)).sort((a,b) => a.date.localeCompare(b.date));
+  if(!monthEvts.length) {
+    document.getElementById('calendarArea').innerHTML = '<div class="checklist-section"><div class="checklist-title">이번 달 등록된 일정이 없습니다</div></div>';
+    return;
+  }
+  document.getElementById('calendarArea').innerHTML = monthEvts.map(e => {
+    const d = new Date(e.date);
+    const dow = ['일','월','화','수','목','금','토'][d.getDay()];
+    const day = `${d.getMonth()+1}/${String(d.getDate()).padStart(2,'0')}(${dow})`;
+    return `<div class="cal-event ${e.type}">
+      <div class="cal-date">${day}</div>
+      <div><div class="cal-title">${e.title}</div><div class="cal-desc">${e.desc}</div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderCalendar() { renderCalGrid(); renderCalList(); }
 
 // Init
 document.getElementById('todayDate').textContent = `${todayStr} (${weekday})`;
