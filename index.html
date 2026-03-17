@@ -132,6 +132,9 @@ tbody tr:hover { background:var(--surface2); }
 .cal-dot.yellow { background:var(--yellow-bg); color:var(--yellow); }
 .cal-dot.blue { background:var(--blue-bg); color:var(--accent2); }
 .cal-dot.orange { background:var(--orange-bg); color:var(--orange); }
+.ilim-toggle { display:flex;align-items:center;gap:5px;padding:5px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);transition:all 0.2s;user-select:none; }
+.ilim-toggle.on { opacity:1; }
+.ilim-toggle.off { opacity:0.35; text-decoration:line-through; }
 </style>
 </head>
 <body>
@@ -191,11 +194,13 @@ tbody tr:hover { background:var(--surface2); }
     <!-- 캘린더 -->
     <div id="page-calendar" class="page">
       <div class="page-header"><h2>구글캘린더 일정</h2><p>등록된 IPO 일정 현황</p></div>
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap;">
         <button onclick="calPrev()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;">&larr;</button>
         <h3 id="calMonthTitle" style="font-size:16px;font-weight:700;min-width:120px;text-align:center;"></h3>
         <button onclick="calNext()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;">&rarr;</button>
         <button onclick="calToday()" style="background:var(--blue-bg);border:1px solid var(--accent);color:var(--accent2);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;margin-left:4px;">오늘</button>
+        <span style="color:var(--text2);font-size:11px;margin-left:8px;">|</span>
+        <div id="ilimToggles" style="display:flex;gap:6px;"></div>
       </div>
       <div id="calGrid" style="margin-bottom:24px;"></div>
       <h3 style="font-size:14px;font-weight:700;margin-bottom:12px;">일정 목록</h3>
@@ -435,16 +440,45 @@ function renderCompleted() {
 }
 
 const CAL_EVENTS = [
-  {date:'2025-12-10',title:'[블랙보드일임/청약] 페스카로 주금납입',type:'yellow',desc:'이체금액 2,035,150원'},
-  {date:'2025-12-10',title:'[블랙보드일임/상장및매도가능일] 페스카로',type:'blue',desc:'미확약 / 상장당일 매도'},
-  {date:'2025-12-24',title:'[블랙보드일임/청약] 세미파이브 주금납입',type:'yellow',desc:'이체금액 20,434,320원'},
-  {date:'2025-12-24',title:'[블랙보드일임/상장] 세미파이브',type:'blue',desc:'락업 1개월'},
-  {date:'2026-01-29',title:'[블랙보드일임/매도가능일] 세미파이브',type:'blue',desc:'락업해제'},
-  {date:'2026-03-06',title:'[블랙보드일임/매도완료] 에스팀',type:'blue',desc:'매도단가 34,000원 / 297.9%'},
-  {date:'2026-03-10',title:'[블랙보드일임/수도결제] 에스팀',type:'orange',desc:'T+2 수도대금결제'},
-  {date:'2026-03-16',title:'[블랙보드일임/청약] 아이엠바이오로직스 주금납입',type:'yellow',desc:'이체금액 498,940원'},
-  {date:'2026-03-20',title:'[블랙보드일임/상장및매도가능일] 아이엠바이오로직스',type:'blue',desc:'공모가 26,000원 / 19주'},
+  {date:'2025-12-10',ilim:'블랙보드일임',title:'[블랙보드일임/청약] 페스카로 주금납입',type:'yellow',desc:'이체금액 2,035,150원'},
+  {date:'2025-12-10',ilim:'블랙보드일임',title:'[블랙보드일임/상장및매도가능일] 페스카로',type:'blue',desc:'미확약 / 상장당일 매도'},
+  {date:'2025-12-24',ilim:'블랙보드일임',title:'[블랙보드일임/청약] 세미파이브 주금납입',type:'yellow',desc:'이체금액 20,434,320원'},
+  {date:'2025-12-24',ilim:'블랙보드일임',title:'[블랙보드일임/상장] 세미파이브',type:'blue',desc:'락업 1개월'},
+  {date:'2026-01-29',ilim:'블랙보드일임',title:'[블랙보드일임/매도가능일] 세미파이브',type:'blue',desc:'락업해제'},
+  {date:'2026-03-06',ilim:'블랙보드일임',title:'[블랙보드일임/매도완료] 에스팀',type:'blue',desc:'매도단가 34,000원 / 297.9%'},
+  {date:'2026-03-10',ilim:'블랙보드일임',title:'[블랙보드일임/수도결제] 에스팀',type:'orange',desc:'T+2 수도대금결제'},
+  {date:'2026-03-16',ilim:'블랙보드일임',title:'[블랙보드일임/청약] 아이엠바이오로직스 주금납입',type:'yellow',desc:'이체금액 498,940원'},
+  {date:'2026-03-20',ilim:'블랙보드일임',title:'[블랙보드일임/상장및매도가능일] 아이엠바이오로직스',type:'blue',desc:'공모가 26,000원 / 19주'},
 ];
+
+const ilimFilter = {};
+function initIlimToggles() {
+  const ilims = [...new Set(CAL_EVENTS.map(e => e.ilim))];
+  // 마크일임도 기본 등록 (데이터 없어도 토글 표시)
+  if(!ilims.includes('마크일임')) ilims.push('마크일임');
+  ilims.forEach(il => ilimFilter[il] = true);
+  renderIlimToggles();
+}
+function renderIlimToggles() {
+  const area = document.getElementById('ilimToggles');
+  area.innerHTML = Object.keys(ilimFilter).map(il => {
+    const on = ilimFilter[il];
+    const color = ILIM_COLORS[il] || '#60a5fa';
+    return `<div class="ilim-toggle ${on?'on':'off'}" onclick="toggleIlim('${il}')" style="background:${on?color+'22':'var(--surface2)'};border-color:${on?color:'var(--border)'};color:${on?color:'var(--text2)'};">
+      <span style="width:8px;height:8px;border-radius:50%;background:${on?color:'var(--text2)'};display:inline-block;"></span>
+      ${il.replace('일임','')}
+    </div>`;
+  }).join('');
+}
+function toggleIlim(il) {
+  ilimFilter[il] = !ilimFilter[il];
+  renderIlimToggles();
+  renderCalGrid();
+  renderCalList();
+}
+function getFilteredEvents() {
+  return CAL_EVENTS.filter(e => ilimFilter[e.ilim] !== false);
+}
 
 let calYear = today.getFullYear(), calMonth = today.getMonth();
 
@@ -473,7 +507,7 @@ function renderCalGrid() {
     const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const dow = new Date(calYear, calMonth, d).getDay();
     const isToday = ds === todayStr;
-    const evts = CAL_EVENTS.filter(e => e.date === ds);
+    const evts = getFilteredEvents().filter(e => e.date === ds);
     html += `<div class="cal-day ${isToday?'today':''}">`;
     html += `<div class="cal-day-num ${dow===0?'sun':dow===6?'sat':''}">${d}</div>`;
     evts.forEach(e => {
@@ -494,7 +528,7 @@ function renderCalGrid() {
 
 function renderCalList() {
   const prefix = `${calYear}-${String(calMonth+1).padStart(2,'0')}`;
-  const monthEvts = CAL_EVENTS.filter(e => e.date.startsWith(prefix)).sort((a,b) => a.date.localeCompare(b.date));
+  const monthEvts = getFilteredEvents().filter(e => e.date.startsWith(prefix)).sort((a,b) => a.date.localeCompare(b.date));
   if(!monthEvts.length) {
     document.getElementById('calendarArea').innerHTML = '<div class="checklist-section"><div class="checklist-title">이번 달 등록된 일정이 없습니다</div></div>';
     return;
@@ -517,6 +551,7 @@ document.getElementById('todayDate').textContent = `${todayStr} (${weekday})`;
 renderStats();
 renderIlimSummary();
 renderChecklist();
+initIlimToggles();
 renderTable();
 renderHolding();
 renderCompleted();
