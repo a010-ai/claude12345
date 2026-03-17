@@ -226,7 +226,7 @@ tbody tr:hover { background:var(--surface2); }
       <div class="stats-row">
         <div class="stat-card"><div class="stat-label">총 투자금액</div><div class="stat-value blue" id="totalInvest">-</div></div>
         <div class="stat-card"><div class="stat-label">실현손익 합계</div><div class="stat-value green" id="totalRealized">-</div></div>
-        <div class="stat-card"><div class="stat-label">평가손익 (보유)</div><div class="stat-value yellow" id="totalUnrealized">-</div></div>
+        <div class="stat-card"><div class="stat-label">평가손익 (보유)</div><div class="stat-value yellow" id="totalUnrealized">-</div><div class="stat-sub" id="priceUpdateStatus"></div></div>
         <div class="stat-card"><div class="stat-label">총 종목수</div><div class="stat-value" id="totalCount">-</div><div class="stat-sub" id="countSub"></div></div>
       </div>
       <div id="ilimSummaryArea" style="margin-bottom:20px;"></div>
@@ -276,7 +276,7 @@ tbody tr:hover { background:var(--surface2); }
     <!-- 보유 종목 -->
     <div id="page-holding" class="page">
       <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
-        <div><h2>보유 종목</h2><p>현재 보유 중인 종목</p></div>
+        <div><h2>보유 종목</h2><p>현재 보유 중인 종목 <span id="holdingPriceStatus" style="font-size:11px;"></span></p></div>
         <div id="holdingIlimToggles" style="display:flex;gap:6px;"></div>
       </div>
       <div id="holdingArea"></div>
@@ -452,6 +452,21 @@ function renderChecklist() {
 }
 
 const LAST_UPDATE = '2026-03-17 23:41';
+const PRICE_UPDATE = '';  // 종가 다운로드 반영 시점 (빈값=미반영)
+
+function renderPriceStatus() {
+  const statusEl = document.getElementById('priceUpdateStatus');
+  const holdingEl = document.getElementById('holdingPriceStatus');
+  if(PRICE_UPDATE) {
+    const msg = '종가반영: ' + PRICE_UPDATE;
+    statusEl.innerHTML = '<span style="color:var(--green);">&#10003; ' + msg + '</span>';
+    holdingEl.innerHTML = '<span style="color:var(--green);">&#10003; ' + msg + '</span>';
+  } else {
+    statusEl.innerHTML = '<span style="color:var(--text2);">종가 미반영</span>';
+    holdingEl.innerHTML = '<span style="color:var(--text2);">종가 미반영</span>';
+  }
+}
+
 function renderTable() {
   const body = document.getElementById('tableBody');
   const filtered = getFilteredData('portfolio');
@@ -663,6 +678,7 @@ renderTable();
 renderHolding();
 renderCompleted();
 renderCalendar();
+renderPriceStatus();
 // 기표일자 기반 계산
 const startDate = new Date('2025-11-24');
 const investAmount = 2000000000;
