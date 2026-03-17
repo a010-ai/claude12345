@@ -240,29 +240,29 @@ tbody tr:hover { background:var(--surface2); }
     </div>
     <div class="nav-group">
       <div class="nav-group-title">업무</div>
-      <div class="nav-item active" onclick="showPage('today')">
+      <div class="nav-item active" onclick="showPage('today',this)">
         <span class="nav-icon">&#128203;</span> 오늘의 할일
         <span class="nav-badge" id="todayBadge">0</span>
       </div>
-      <div class="nav-item" onclick="showPage('calendar')">
+      <div class="nav-item" onclick="showPage('calendar',this)">
         <span class="nav-icon">&#128197;</span> 캘린더 일정
       </div>
     </div>
     <div class="nav-group">
       <div class="nav-group-title">데이터</div>
-      <div class="nav-item" onclick="showPage('portfolio')">
+      <div class="nav-item" onclick="showPage('portfolio',this)">
         <span class="nav-icon">&#128200;</span> 참여현황 전체
       </div>
-      <div class="nav-item" onclick="showPage('holding')">
+      <div class="nav-item" onclick="showPage('holding',this)">
         <span class="nav-icon">&#128176;</span> 보유 종목
       </div>
-      <div class="nav-item" onclick="showPage('completed')">
+      <div class="nav-item" onclick="showPage('completed',this)">
         <span class="nav-icon">&#9989;</span> 완료 종목
       </div>
     </div>
     <div class="nav-group">
       <div class="nav-group-title">설정</div>
-      <div class="nav-item" onclick="showPage('info')">
+      <div class="nav-item" onclick="showPage('info',this)">
         <span class="nav-icon">&#9881;</span> 일임계약 정보
       </div>
     </div>
@@ -404,12 +404,15 @@ function toggleSidebar() {
   document.getElementById('sidebarOverlay').classList.toggle('open');
 }
 
-function showPage(id) {
+function showPage(id, el) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  event.currentTarget.classList.add('active');
-  if(window.innerWidth <= 768) { toggleSidebar(); }
+  if(el) el.classList.add('active');
+  if(window.innerWidth <= 768) {
+    document.getElementById('sidebarEl').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('open');
+  }
 }
 
 function getStatus(d) {
