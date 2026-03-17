@@ -429,9 +429,15 @@ function renderHolding() {
   const area = document.getElementById('holdingArea');
   const holding = getFilteredData('holding').filter(d => d.holding);
   if(!holding.length) { area.innerHTML = '<div class="checklist-section"><div class="checklist-title">현재 보유 중인 종목이 없습니다</div></div>'; return; }
-  area.innerHTML = holding.map(d => `
-    <div class="checklist-section">
-      <div class="checklist-title">${d.name} <span class="tag tag-yellow">${d.lockup}</span></div>
+  area.innerHTML = holding.map(d => {
+    const color = ILIM_COLORS[d.ilim] || '#60a5fa';
+    const ilimShort = (d.ilim||'').replace('일임','');
+    return `
+    <div class="checklist-section" style="border-left:3px solid ${color};">
+      <div class="checklist-title">
+        <span style="background:${color}22;color:${color};font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;">${ilimShort}</span>
+        ${d.name} <span class="tag tag-yellow">${d.lockup}</span>
+      </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px;">
         <div><div class="stat-label">공모단가</div><div style="font-family:'JetBrains Mono';font-size:15px;font-weight:700;">${fmt(d.price)}원</div></div>
         <div><div class="stat-label">보유수량</div><div style="font-family:'JetBrains Mono';font-size:15px;font-weight:700;">${fmt(d.holding)}주</div></div>
@@ -439,8 +445,8 @@ function renderHolding() {
         <div><div class="stat-label">평가손익</div><div style="font-family:'JetBrains Mono';font-size:15px;font-weight:700;color:var(--green);">+${fmt(d.unrealized)}원</div></div>
       </div>
       <div style="margin-top:12px;font-size:12px;color:var(--text2);">배정금액: ${fmt(d.alloc)}원 | 매매가능일: ${d.tradeable} | 수익률: ${d.returnRate}</div>
-    </div>
-  `).join('');
+    </div>`;
+  }).join('');
 }
 
 function renderCompleted() {
