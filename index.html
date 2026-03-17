@@ -121,7 +121,7 @@ tbody tr:hover { background:var(--surface2); }
 .ilim-mini-table td { padding:4px 6px; font-family:'JetBrains Mono',monospace; font-size:11px; }
 .ilim-mini-table td.r { text-align:right; }
 .ilim-section-title { font-family:'Noto Sans KR',sans-serif; font-size:13px; font-weight:700; color:var(--text2); margin-bottom:10px; border-left:3px solid var(--accent); padding-left:10px; }
-.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:2px; background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+.cal-grid { display:grid; grid-template-columns:repeat(5,1fr) minmax(0,0.7fr) minmax(0,0.7fr); gap:2px; background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
 .cal-grid .cal-hdr { background:var(--surface2); padding:8px 4px; text-align:center; font-size:11px; font-weight:600; color:var(--text2); }
 .cal-grid .cal-hdr.sun { color:var(--red); }
 .cal-grid .cal-hdr.sat { color:var(--accent2); }
@@ -190,7 +190,7 @@ tbody tr:hover { background:var(--surface2); }
   table { min-width:900px; }
   .table-toolbar { flex-direction:column; gap:10px; align-items:flex-start; }
   .table-toolbar > div { flex-wrap:wrap; }
-  .cal-grid { grid-template-columns:repeat(7,1fr); font-size:9px; }
+  .cal-grid { grid-template-columns:repeat(5,1fr) minmax(0,0.6fr) minmax(0,0.6fr); font-size:9px; }
   .cal-grid .cal-day { min-height:52px; padding:2px 3px; }
   .cal-dot { font-size:7px; padding:1px 2px; }
   .cal-day-num { font-size:9px; }
@@ -677,12 +677,15 @@ function renderCalGrid() {
   const days = last.getDate();
   const prevLast = new Date(calYear, calMonth, 0).getDate();
 
-  const hdrs = ['일','월','화','수','목','금','토'];
+  const hdrs = ['월','화','수','목','금','토','일'];
   let html = '<div class="cal-grid">';
-  hdrs.forEach((h,i) => html += `<div class="cal-hdr ${i===0?'sun':i===6?'sat':''}">${h}</div>`);
+  hdrs.forEach((h,i) => html += `<div class="cal-hdr ${i===5?'sat':i===6?'sun':''}">${h}</div>`);
+
+  // convert Sunday-based (0=Sun) to Monday-based (0=Mon)
+  const monStart = (startDay + 6) % 7; // 0=Mon,1=Tue,...,6=Sun
 
   // prev month
-  for(let i=startDay-1; i>=0; i--) {
+  for(let i=monStart-1; i>=0; i--) {
     html += `<div class="cal-day other"><div class="cal-day-num">${prevLast-i}</div></div>`;
   }
   // this month
@@ -700,7 +703,7 @@ function renderCalGrid() {
     html += '</div>';
   }
   // next month
-  const totalCells = startDay + days;
+  const totalCells = monStart + days;
   const remain = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
   for(let i=1; i<=remain; i++) {
     html += `<div class="cal-day other"><div class="cal-day-num">${i}</div></div>`;
