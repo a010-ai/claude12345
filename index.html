@@ -109,6 +109,15 @@ tbody tr:hover { background:var(--surface2); }
 .cal-date { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text2); min-width:80px; }
 .cal-title { font-size:13px; font-weight:600; }
 .cal-desc { font-size:11px; color:var(--text2); margin-top:2px; }
+.ilim-summary { display:grid; grid-template-columns:repeat(auto-fit, minmax(320px,1fr)); gap:12px; }
+.ilim-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:16px; border-left:3px solid var(--accent); }
+.ilim-card-title { font-size:13px; font-weight:700; margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+.ilim-card-title .dot { width:8px; height:8px; border-radius:50%; }
+.ilim-mini-table { width:100%; font-size:11px; border-collapse:collapse; }
+.ilim-mini-table th { text-align:left; color:var(--text2); font-weight:500; padding:4px 6px; border-bottom:1px solid var(--border); }
+.ilim-mini-table td { padding:4px 6px; font-family:'JetBrains Mono',monospace; font-size:11px; }
+.ilim-mini-table td.r { text-align:right; }
+.ilim-section-title { font-size:13px; font-weight:700; color:var(--text2); margin-bottom:10px; padding-left:4px; border-left:3px solid var(--accent); padding-left:10px; }
 </style>
 </head>
 <body>
@@ -161,6 +170,7 @@ tbody tr:hover { background:var(--surface2); }
         <div class="stat-card"><div class="stat-label">평가손익 (보유)</div><div class="stat-value yellow" id="totalUnrealized">-</div></div>
         <div class="stat-card"><div class="stat-label">총 종목수</div><div class="stat-value" id="totalCount">-</div><div class="stat-sub" id="countSub"></div></div>
       </div>
+      <div id="ilimSummaryArea" style="margin-bottom:20px;"></div>
       <div id="checklistArea"></div>
     </div>
 
@@ -228,7 +238,9 @@ tbody tr:hover { background:var(--surface2); }
 </div>
 
 <script>
-const DATA = [{"seq":1,"name":"페스카로","broker":"키움증권","price":15500,"qty":130,"alloc":2015000,"fee":20150,"total":2035150,"listing":"2025-12-10","lockup":"미확약","tradeable":"2025-12-10","holding":null,"realized":3842016,"unrealized":null,"totalPnl":3842016,"returnRate":"190.7%"},{"seq":2,"name":"키움히어로제1호기업인수목적","broker":"키움증권","price":2000,"qty":305,"alloc":610000,"fee":6100,"total":616100,"listing":"2025-12-12","lockup":"미확약","tradeable":"2025-12-12","holding":null,"realized":417837,"unrealized":null,"totalPnl":417837,"returnRate":"68.5%"},{"seq":3,"name":"유진기업인수목적12호","broker":"유진투자증권","price":2000,"qty":2000,"alloc":4000000,"fee":40000,"total":4040000,"listing":"2025-12-11","lockup":"미확약","tradeable":"2025-12-11","holding":null,"realized":2399440,"unrealized":null,"totalPnl":2399440,"returnRate":"60.0%"},{"seq":4,"name":"이지스","broker":"NH투자증권","price":15000,"qty":90,"alloc":1350000,"fee":13500,"total":1363500,"listing":"2025-12-11","lockup":"미확약","tradeable":"2025-12-11","holding":null,"realized":1533350,"unrealized":null,"totalPnl":1533350,"returnRate":"113.6%"},{"seq":5,"name":"쿼드메디슨","broker":"NH투자증권","price":15000,"qty":170,"alloc":2550000,"fee":25500,"total":2575500,"listing":"2025-12-12","lockup":"미확약","tradeable":"2025-12-12","holding":null,"realized":1420484,"unrealized":null,"totalPnl":1420484,"returnRate":"55.7%"},{"seq":6,"name":"티엠씨","broker":"미래에셋증권","price":9300,"qty":570,"alloc":5301000,"fee":53010,"total":5354010,"listing":"2025-12-15","lockup":"미확약","tradeable":"2025-12-15","holding":null,"realized":7237786,"unrealized":null,"totalPnl":7237786,"returnRate":"136.5%"},{"seq":7,"name":"메리츠제1호기업인수목적","broker":"메리츠증권","price":2000,"qty":4783,"alloc":9566000,"fee":95660,"total":9661660,"listing":"2025-12-15","lockup":"미확약","tradeable":"2025-12-15","holding":null,"realized":4262720,"unrealized":null,"totalPnl":4262720,"returnRate":"44.6%"},{"seq":8,"name":"아크릴","broker":"신한투자증권","price":19500,"qty":1176,"alloc":22932000,"fee":229320,"total":23161320,"listing":"2025-12-16","lockup":"15일","tradeable":"2026-01-02","holding":null,"realized":13423451,"unrealized":null,"totalPnl":13423451,"returnRate":"58.5%"},{"seq":9,"name":"나라스페이스테크놀로지","broker":"삼성증권","price":16500,"qty":244,"alloc":4026000,"fee":40260,"total":4066260,"listing":"2025-12-16","lockup":"미확약","tradeable":"2025-12-16","holding":null,"realized":4244066,"unrealized":null,"totalPnl":4244066,"returnRate":"105.4%"},{"seq":10,"name":"알지노믹스","broker":"삼성증권","price":22500,"qty":110,"alloc":2475000,"fee":24750,"total":2499750,"listing":"2025-12-18","lockup":"15일","tradeable":"2026-01-02","holding":null,"realized":14559102,"unrealized":null,"totalPnl":14559102,"returnRate":"588.2%"},{"seq":11,"name":"미래에셋비전기업인수목적11호","broker":"미래에셋증권","price":2000,"qty":1070,"alloc":2140000,"fee":0,"total":2140000,"listing":"2025-12-22","lockup":"미확약","tradeable":"2025-12-22","holding":null,"realized":2018961,"unrealized":null,"totalPnl":2018961,"returnRate":"94.3%"},{"seq":12,"name":"삼진식품","broker":"대신증권","price":7600,"qty":301,"alloc":2287600,"fee":22876,"total":2310476,"listing":"2025-12-22","lockup":"미확약","tradeable":"2025-12-22","holding":null,"realized":4343302,"unrealized":null,"totalPnl":4343302,"returnRate":"189.9%"},{"seq":13,"name":"하나36호기업인수목적","broker":"하나증권","price":2000,"qty":464,"alloc":928000,"fee":9280,"total":937280,"listing":"2025-12-22","lockup":"미확약","tradeable":"2025-12-22","holding":null,"realized":458342,"unrealized":null,"totalPnl":458342,"returnRate":"49.4%"},{"seq":14,"name":"미래에셋비전기업인수목적10호","broker":"미래에셋증권","price":2000,"qty":750,"alloc":1500000,"fee":0,"total":1500000,"listing":"2025-12-23","lockup":"미확약","tradeable":"2025-12-23","holding":null,"realized":2274569,"unrealized":null,"totalPnl":2274569,"returnRate":"151.6%"},{"seq":15,"name":"리브스메드","broker":"삼성증권","price":55000,"qty":183,"alloc":10065000,"fee":100650,"total":10165650,"listing":"2025-12-24","lockup":"미확약","tradeable":"2025-12-24","holding":null,"realized":1976163,"unrealized":null,"totalPnl":1976163,"returnRate":"19.6%"},{"seq":16,"name":"세미파이브","broker":"삼성증권","price":24000,"qty":843,"alloc":20232000,"fee":202320,"total":20434320,"listing":"2025-12-24","lockup":"1개월","tradeable":"2026-01-29","holding":843,"realized":null,"unrealized":4889400,"totalPnl":4889400,"closePrice":29800,"returnRate":"24.2%"}];
+const DATA = [{"seq":1,"name":"페스카로","ilim":"블랙보드일임","broker":"키움증권","price":15500,"qty":130,"alloc":2015000,"fee":20150,"total":2035150,"listing":"2025-12-10","lockup":"미확약","tradeable":"2025-12-10","holding":null,"realized":3842016,"unrealized":null,"totalPnl":3842016,"returnRate":"190.7%"},{"seq":2,"name":"키움히어로제1호기업인수목적","ilim":"블랙보드일임","broker":"키움증권","price":2000,"qty":305,"alloc":610000,"fee":6100,"total":616100,"listing":"2025-12-12","lockup":"미확약","tradeable":"2025-12-12","holding":null,"realized":417837,"unrealized":null,"totalPnl":417837,"returnRate":"68.5%"},{"seq":3,"name":"유진기업인수목적12호","ilim":"블랙보드일임","broker":"유진투자증권","price":2000,"qty":2000,"alloc":4000000,"fee":40000,"total":4040000,"listing":"2025-12-11","lockup":"미확약","tradeable":"2025-12-11","holding":null,"realized":2399440,"unrealized":null,"totalPnl":2399440,"returnRate":"60.0%"},{"seq":4,"name":"이지스","ilim":"블랙보드일임","broker":"NH투자증권","price":15000,"qty":90,"alloc":1350000,"fee":13500,"total":1363500,"listing":"2025-12-11","lockup":"미확약","tradeable":"2025-12-11","holding":null,"realized":1533350,"unrealized":null,"totalPnl":1533350,"returnRate":"113.6%"},{"seq":5,"name":"쿼드메디슨","ilim":"블랙보드일임","broker":"NH투자증권","price":15000,"qty":170,"alloc":2550000,"fee":25500,"total":2575500,"listing":"2025-12-12","lockup":"미확약","tradeable":"2025-12-12","holding":null,"realized":1420484,"unrealized":null,"totalPnl":1420484,"returnRate":"55.7%"},{"seq":6,"name":"티엠씨","ilim":"블랙보드일임","broker":"미래에셋증권","price":9300,"qty":570,"alloc":5301000,"fee":53010,"total":5354010,"listing":"2025-12-15","lockup":"미확약","tradeable":"2025-12-15","holding":null,"realized":7237786,"unrealized":null,"totalPnl":7237786,"returnRate":"136.5%"},{"seq":7,"name":"메리츠제1호기업인수목적","ilim":"블랙보드일임","broker":"메리츠증권","price":2000,"qty":4783,"alloc":9566000,"fee":95660,"total":9661660,"listing":"2025-12-15","lockup":"미확약","tradeable":"2025-12-15","holding":null,"realized":4262720,"unrealized":null,"totalPnl":4262720,"returnRate":"44.6%"},{"seq":8,"name":"아크릴","ilim":"블랙보드일임","broker":"신한투자증권","price":19500,"qty":1176,"alloc":22932000,"fee":229320,"total":23161320,"listing":"2025-12-16","lockup":"15일","tradeable":"2026-01-02","holding":null,"realized":13423451,"unrealized":null,"totalPnl":13423451,"returnRate":"58.5%"},{"seq":9,"name":"나라스페이스테크놀로지","ilim":"블랙보드일임","broker":"삼성증권","price":16500,"qty":244,"alloc":4026000,"fee":40260,"total":4066260,"listing":"2025-12-16","lockup":"미확약","tradeable":"2025-12-16","holding":null,"realized":4244066,"unrealized":null,"totalPnl":4244066,"returnRate":"105.4%"},{"seq":10,"name":"알지노믹스","ilim":"블랙보드일임","broker":"삼성증권","price":22500,"qty":110,"alloc":2475000,"fee":24750,"total":2499750,"listing":"2025-12-18","lockup":"15일","tradeable":"2026-01-02","holding":null,"realized":14559102,"unrealized":null,"totalPnl":14559102,"returnRate":"588.2%"},{"seq":11,"name":"미래에셋비전기업인수목적11호","ilim":"블랙보드일임","broker":"미래에셋증권","price":2000,"qty":1070,"alloc":2140000,"fee":0,"total":2140000,"listing":"2025-12-22","lockup":"미확약","tradeable":"2025-12-22","holding":null,"realized":2018961,"unrealized":null,"totalPnl":2018961,"returnRate":"94.3%"},{"seq":12,"name":"삼진식품","ilim":"블랙보드일임","broker":"대신증권","price":7600,"qty":301,"alloc":2287600,"fee":22876,"total":2310476,"listing":"2025-12-22","lockup":"미확약","tradeable":"2025-12-22","holding":null,"realized":4343302,"unrealized":null,"totalPnl":4343302,"returnRate":"189.9%"},{"seq":13,"name":"하나36호기업인수목적","ilim":"블랙보드일임","broker":"하나증권","price":2000,"qty":464,"alloc":928000,"fee":9280,"total":937280,"listing":"2025-12-22","lockup":"미확약","tradeable":"2025-12-22","holding":null,"realized":458342,"unrealized":null,"totalPnl":458342,"returnRate":"49.4%"},{"seq":14,"name":"미래에셋비전기업인수목적10호","ilim":"블랙보드일임","broker":"미래에셋증권","price":2000,"qty":750,"alloc":1500000,"fee":0,"total":1500000,"listing":"2025-12-23","lockup":"미확약","tradeable":"2025-12-23","holding":null,"realized":2274569,"unrealized":null,"totalPnl":2274569,"returnRate":"151.6%"},{"seq":15,"name":"리브스메드","ilim":"블랙보드일임","broker":"삼성증권","price":55000,"qty":183,"alloc":10065000,"fee":100650,"total":10165650,"listing":"2025-12-24","lockup":"미확약","tradeable":"2025-12-24","holding":null,"realized":1976163,"unrealized":null,"totalPnl":1976163,"returnRate":"19.6%"},{"seq":16,"name":"세미파이브","ilim":"블랙보드일임","broker":"삼성증권","price":24000,"qty":843,"alloc":20232000,"fee":202320,"total":20434320,"listing":"2025-12-24","lockup":"1개월","tradeable":"2026-01-29","holding":843,"realized":null,"unrealized":4889400,"totalPnl":4889400,"closePrice":29800,"returnRate":"24.2%"}];
+
+const ILIM_COLORS = {'블랙보드일임':'#3b82f6','마크일임':'#a78bfa'};
 
 const fmt = n => n == null ? '-' : n.toLocaleString('ko-KR');
 const today = new Date();
@@ -267,17 +279,51 @@ function renderStats() {
   document.getElementById('countSub').textContent = `완료 ${completed.length} / 보유 ${holding.length}`;
 }
 
+function renderIlimSummary() {
+  const area = document.getElementById('ilimSummaryArea');
+  const ilims = [...new Set(DATA.map(d => d.ilim))];
+  let html = '<div class="ilim-summary">';
+  ilims.forEach(ilim => {
+    const items = DATA.filter(d => d.ilim === ilim);
+    const inv = items.reduce((s,d) => s+(d.total||0), 0);
+    const real = items.reduce((s,d) => s+(d.realized||0), 0);
+    const unreal = items.reduce((s,d) => s+(d.unrealized||0), 0);
+    const totalPnl = items.reduce((s,d) => s+(d.totalPnl||0), 0);
+    const holdCnt = items.filter(d => d.holding).length;
+    const compCnt = items.filter(d => !d.holding).length;
+    const color = ILIM_COLORS[ilim] || '#60a5fa';
+    html += `<div class="ilim-card" style="border-left-color:${color}">
+      <div class="ilim-card-title"><span class="dot" style="background:${color}"></span>${ilim}</div>
+      <table class="ilim-mini-table">
+        <tr><th>항목</th><th style="text-align:right">금액</th></tr>
+        <tr><td>투자금액</td><td class="r">${fmt(inv)}원</td></tr>
+        <tr><td>실현손익</td><td class="r" style="color:var(--green)">+${fmt(real)}원</td></tr>
+        <tr><td>평가손익</td><td class="r" style="color:var(--yellow)">${unreal ? '+'+fmt(unreal)+'원' : '-'}</td></tr>
+        <tr><td>총손익</td><td class="r" style="color:var(--green)">+${fmt(totalPnl)}원</td></tr>
+        <tr><td>종목수</td><td class="r">${items.length}건 (완료 ${compCnt} / 보유 ${holdCnt})</td></tr>
+      </table>
+    </div>`;
+  });
+  html += '</div>';
+  area.innerHTML = html;
+}
+
 function renderChecklist() {
   const area = document.getElementById('checklistArea');
   let html = '';
   let taskCount = 0;
+  const ilims = [...new Set(DATA.map(d => d.ilim))];
 
-  // 보유 중 종목
-  const holding = DATA.filter(d => d.holding);
-  if(holding.length) {
+  ilims.forEach(ilim => {
+    const items = DATA.filter(d => d.ilim === ilim);
+    const holding = items.filter(d => d.holding);
+    if(!holding.length) return;
+
+    const color = ILIM_COLORS[ilim] || '#60a5fa';
+    html += `<div class="ilim-section-title" style="border-left-color:${color};margin-top:16px;">${ilim}</div>`;
+
     holding.forEach(d => {
       const isLockup = todayStr < d.tradeable;
-      const isSellable = todayStr >= d.tradeable;
       taskCount++;
       if(isLockup) {
         html += `<div class="checklist-section">
@@ -295,7 +341,7 @@ function renderChecklist() {
         </div>`;
       }
     });
-  }
+  });
 
   if(taskCount === 0) {
     html += `<div class="checklist-section"><div class="checklist-title"><span class="tag tag-green">완료</span> 오늘 처리할 업무가 없습니다</div></div>`;
@@ -384,6 +430,7 @@ function renderCalendar() {
 // Init
 document.getElementById('todayDate').textContent = `${todayStr} (${weekday})`;
 renderStats();
+renderIlimSummary();
 renderChecklist();
 renderTable();
 renderHolding();
