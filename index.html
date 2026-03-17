@@ -212,7 +212,7 @@ tbody tr:hover { background:var(--surface2); }
       <div class="page-header"><h2>참여현황 전체</h2><p>블랙보드 일임 공모주 참여현황 (ipo공모주참여현황_v3.xlsx)</p></div>
       <div class="table-wrap">
         <div class="table-toolbar">
-          <h3>전체 종목 (<span id="allCount">0</span>)</h3>
+          <h3>전체 종목 (<span id="allCount">0</span>) <span style="font-size:11px;font-weight:400;color:var(--text2);margin-left:8px;">최종 업데이트: <span id="lastUpdate"></span></span></h3>
           <div class="filter-tabs">
             <div class="filter-tab active" onclick="filterTable('all',this)">전체</div>
             <div class="filter-tab" onclick="filterTable('completed',this)">완료</div>
@@ -378,9 +378,11 @@ function renderChecklist() {
   document.getElementById('todayBadge').textContent = taskCount;
 }
 
+const LAST_UPDATE = '2026-03-17';
 function renderTable() {
   const body = document.getElementById('tableBody');
   document.getElementById('allCount').textContent = DATA.length;
+  document.getElementById('lastUpdate').textContent = LAST_UPDATE;
   body.innerHTML = DATA.map(d => {
     const st = getStatus(d);
     const stLabel = st==='completed' ? '완료' : st==='lockup' ? '락업중' : st==='sellable' ? '매도가능' : st==='waiting' ? '상장대기' : '상장일';
