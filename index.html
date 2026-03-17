@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IPO 공모주 일임계약 업무 대시보드</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0e1a;
+  --surface: #111827;
+  --surface2: #1a2235;
+  --border: #1e2d45;
+  --text: #e2e8f0;
+  --text2: #94a3b8;
+  --accent: #3b82f6;
+  --accent2: #60a5fa;
+  --green: #10b981;
+  --green-bg: rgba(16,185,129,0.1);
+  --red: #ef4444;
+  --red-bg: rgba(239,68,68,0.1);
+  --yellow: #f59e0b;
+  --yellow-bg: rgba(245,158,11,0.1);
+  --orange: #f97316;
+  --orange-bg: rgba(249,115,22,0.1);
+  --blue-bg: rgba(59,130,246,0.1);
+  --purple: #a78bfa;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+.app { display:flex; min-height:100vh; }
+
+/* Sidebar */
+.sidebar { width:240px; background:var(--surface); border-right:1px solid var(--border); padding:20px 0; position:fixed; height:100vh; overflow-y:auto; z-index:10; }
+.sidebar-logo { padding:0 20px 24px; border-bottom:1px solid var(--border); margin-bottom:16px; }
+.sidebar-logo h1 { font-size:15px; font-weight:700; color:var(--accent2); letter-spacing:-0.5px; }
+.sidebar-logo p { font-size:11px; color:var(--text2); margin-top:4px; }
+.nav-group { padding:0 12px; margin-bottom:16px; }
+.nav-group-title { font-size:10px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:1px; padding:0 8px; margin-bottom:8px; }
+.nav-item { display:flex; align-items:center; gap:10px; padding:10px 12px; border-radius:8px; cursor:pointer; font-size:13px; color:var(--text2); transition:all 0.2s; }
+.nav-item:hover { background:var(--surface2); color:var(--text); }
+.nav-item.active { background:var(--blue-bg); color:var(--accent2); font-weight:500; }
+.nav-icon { width:18px; height:18px; display:flex; align-items:center; justify-content:center; font-size:14px; }
+.nav-badge { margin-left:auto; background:var(--red); color:#fff; font-size:10px; font-weight:700; padding:2px 7px; border-radius:10px; }
+
+/* Main */
+.main { flex:1; margin-left:240px; padding:28px 32px; }
+.page { display:none; }
+.page.active { display:block; animation:fadeIn 0.3s; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+/* Header */
+.page-header { margin-bottom:24px; }
+.page-header h2 { font-size:22px; font-weight:700; letter-spacing:-0.5px; }
+.page-header p { font-size:13px; color:var(--text2); margin-top:4px; }
+
+/* Cards */
+.stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
+.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; }
+.stat-label { font-size:11px; color:var(--text2); font-weight:500; margin-bottom:8px; }
+.stat-value { font-size:24px; font-weight:900; font-family:'JetBrains Mono',monospace; }
+.stat-sub { font-size:11px; color:var(--text2); margin-top:4px; }
+.stat-value.green { color:var(--green); }
+.stat-value.blue { color:var(--accent2); }
+.stat-value.yellow { color:var(--yellow); }
+
+/* Checklist */
+.checklist-section { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; margin-bottom:16px; }
+.checklist-title { display:flex; align-items:center; gap:8px; font-size:14px; font-weight:700; margin-bottom:14px; }
+.tag { font-size:10px; font-weight:700; padding:3px 8px; border-radius:4px; }
+.tag-red { background:var(--red-bg); color:var(--red); }
+.tag-yellow { background:var(--yellow-bg); color:var(--yellow); }
+.tag-green { background:var(--green-bg); color:var(--green); }
+.tag-blue { background:var(--blue-bg); color:var(--accent2); }
+.tag-orange { background:var(--orange-bg); color:var(--orange); }
+.check-item { display:flex; align-items:flex-start; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); font-size:13px; line-height:1.6; }
+.check-item:last-child { border-bottom:none; }
+.check-item input[type=checkbox] { margin-top:4px; accent-color:var(--accent); width:16px; height:16px; cursor:pointer; }
+.check-detail { color:var(--text2); font-size:12px; margin-top:2px; }
+
+/* Table */
+.table-wrap { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+.table-toolbar { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border); }
+.table-toolbar h3 { font-size:14px; font-weight:700; }
+.filter-tabs { display:flex; gap:6px; }
+.filter-tab { padding:6px 14px; border-radius:6px; font-size:12px; cursor:pointer; background:var(--surface2); color:var(--text2); border:1px solid var(--border); transition:all 0.2s; }
+.filter-tab.active, .filter-tab:hover { background:var(--blue-bg); color:var(--accent2); border-color:var(--accent); }
+table { width:100%; border-collapse:collapse; font-size:12px; }
+thead th { background:var(--surface2); color:var(--text2); font-weight:600; padding:10px 12px; text-align:left; position:sticky; top:0; white-space:nowrap; }
+tbody td { padding:10px 12px; border-bottom:1px solid var(--border); white-space:nowrap; }
+tbody tr:hover { background:var(--surface2); }
+.num { text-align:right; font-family:'JetBrains Mono',monospace; font-size:11px; }
+.pnl-pos { color:var(--green); }
+.pnl-neg { color:var(--red); }
+.status-badge { font-size:10px; font-weight:600; padding:3px 8px; border-radius:4px; display:inline-block; }
+.status-completed { background:var(--green-bg); color:var(--green); }
+.status-holding { background:var(--yellow-bg); color:var(--yellow); }
+.status-waiting { background:var(--blue-bg); color:var(--accent2); }
+.table-scroll { max-height:520px; overflow-y:auto; }
+.table-scroll::-webkit-scrollbar { width:6px; }
+.table-scroll::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px; }
+
+/* Calendar */
+.cal-events { display:flex; flex-direction:column; gap:10px; }
+.cal-event { display:flex; align-items:center; gap:14px; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 18px; border-left:4px solid; }
+.cal-event.yellow { border-left-color:var(--yellow); }
+.cal-event.blue { border-left-color:var(--accent); }
+.cal-event.orange { border-left-color:var(--orange); }
+.cal-date { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text2); min-width:80px; }
+.cal-title { font-size:13px; font-weight:600; }
+.cal-desc { font-size:11px; color:var(--text2); margin-top:2px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <h1>IPO 공모주 대시보드</h1>
+      <p>오케이저축은행 신탁팀</p>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">업무</div>
+      <div class="nav-item active" onclick="showPage('today')">
+        <span class="nav-icon">&#128203;</span> 오늘의 할일
+        <span class="nav-badge" id="todayBadge">0</span>
+      </div>
+      <div class="nav-item" onclick="showPage('calendar')">
+        <span class="nav-icon">&#128197;</span> 캘린더 일정
+      </div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">데이터</div>
+      <div class="nav-item" onclick="showPage('portfolio')">
+        <span class="nav-icon">&#128200;</span> 참여현황 전체
+      </div>
+      <div class="nav-item" onclick="showPage('holding')">
+        <span class="nav-icon">&#128176;</span> 보유 종목
+      </div>
+      <div class="nav-item" onclick="showPage('completed')">
+        <span class="nav-icon">&#9989;</span> 완료 종목
+      </div>
+    </div>
+    <div class="nav-group">
+      <div class="nav-group-title">설정</div>
+      <div class="nav-item" onclick="showPage('info')">
+        <span class="nav-icon">&#9881;</span> 일임계약 정보
+      </div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <!-- 오늘의 할일 -->
+    <div id="page-today" class="page active">
+      <div class="page-header">
+        <h2>오늘의 할일</h2>
+        <p id="todayDate"></p>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-label">총 투자금액</div><div class="stat-value blue" id="totalInvest">-</div></div>
+        <div class="stat-card"><div class="stat-label">실현손익 합계</div><div class="stat-value green" id="totalRealized">-</div></div>
+        <div class="stat-card"><div class="stat-label">평가손익 (보유)</div><div class="stat-value yellow" id="totalUnrealized">-</div></div>
+        <div class="stat-card"><div class="stat-label">총 종목수</div><div class="stat-value" id="totalCount">-</div><div class="stat-sub" id="countSub"></div></div>
+      </div>
+      <div id="checklistArea"></div>
+    </div>
+
+    <!-- 캘린더 -->
+    <div id="page-calendar" class="page">
+      <div class="page-header"><h2>구글캘린더 일정</h2><p>등록된 IPO 일정 현황</p></div>
+      <div id="calendarArea" class="cal-events"></div>
+    </div>
+
+    <!-- 참여현황 전체 -->
+    <div id="page-portfolio" class="page">
+      <div class="page-header"><h2>참여현황 전체</h2><p>블랙보드 일임 공모주 참여현황 (ipo공모주참여현황_v3.xlsx)</p></div>
+      <div class="table-wrap">
+        <div class="table-toolbar">
+          <h3>전체 종목 (<span id="allCount">0</span>)</h3>
+          <div class="filter-tabs">
+            <div class="filter-tab active" onclick="filterTable('all',this)">전체</div>
+            <div class="filter-tab" onclick="filterTable('completed',this)">완료</div>
+            <div class="filter-tab" onclick="filterTable('holding',this)">보유중</div>
+          </div>
+        </div>
+        <div class="table-scroll">
+          <table><thead><tr>
+            <th>#</th><th>종목명</th><th>주간사</th><th>공모단가</th><th>배정수량</th><th>배정금액</th><th>투자총액</th><th>상장일</th><th>락업</th><th>보유</th><th>실현손익</th><th>평가손익</th><th>총손익</th><th>수익률</th><th>상태</th>
+          </tr></thead><tbody id="tableBody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 보유 종목 -->
+    <div id="page-holding" class="page">
+      <div class="page-header"><h2>보유 종목</h2><p>현재 보유 중인 종목</p></div>
+      <div id="holdingArea"></div>
+    </div>
+
+    <!-- 완료 종목 -->
+    <div id="page-completed" class="page">
+      <div class="page-header"><h2>완료 종목</h2><p>매도 완료된 종목</p></div>
+      <div class="table-wrap">
+        <div class="table-toolbar"><h3>완료 종목 (<span id="compCount">0</span>)</h3></div>
+        <div class="table-scroll">
+          <table><thead><tr>
+            <th>#</th><th>종목명</th><th>공모단가</th><th>배정금액</th><th>실현손익</th><th>수익률</th>
+          </tr></thead><tbody id="compBody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- 일임계약 정보 -->
+    <div id="page-info" class="page">
+      <div class="page-header"><h2>일임계약 정보</h2><p>등록된 일임계약 및 설정</p></div>
+      <div class="checklist-section">
+        <div class="checklist-title">블랙보드일임 <span class="tag tag-green">활성</span></div>
+        <div class="check-item" style="border:none;padding:8px 0;">운용사: (주)블랙보드자산운용</div>
+        <div class="check-item" style="border:none;padding:8px 0;">위탁자: (주)오케이저축은행</div>
+        <div class="check-item" style="border:none;padding:8px 0;">캘린더: IPO공모주(블랙보드)일정</div>
+        <div class="check-item" style="border:none;padding:8px 0;">기준 엑셀: ipo공모주참여현황_v3.xlsx</div>
+      </div>
+      <div class="checklist-section">
+        <div class="checklist-title">마크일임 <span class="tag tag-yellow">미등록</span></div>
+        <div class="check-item" style="border:none;padding:8px 0;">추후 등록 예정</div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+const DATA = [{"seq":1,"name":"페스카로","broker":"키움증권","price":15500,"qty":130,"alloc":2015000,"fee":20150,"total":2035150,"listing":"2025-12-10","lockup":"미확약","tradeable":"2025-12-10","holding":null,"realized":3842016,"unrealized":null,"totalPnl":3842016,"returnRate":"190.7%"},{"seq":2,"name":"키움히어로제1호기업인수목적","broker":"키움증권","price":2000,"qty":305,"alloc":610000,"fee":6100,"total":616100,"listing":"2025-12-12","lockup":"미확약","tradeable":"2025-12-12","holding":null,"realized":417837,"unrealized":null,"totalPnl":417837,"returnRate":"68.5%"},{"seq":3,"name":"유진기업인수목적12호","broker":"유진투자증권","price":2000,"qty":2000,"alloc":4000000,"fee":40000,"total":4040000,"listing":"2025-12-11","lockup":"미확약","tradeable":"2025-12-11","holding":null,"realized":2399440,"unrealized":null,"totalPnl":2399440,"returnRate":"60.0%"},{"seq":4,"name":"이지스","broker":"NH투자증권","price":15000,"qty":90,"alloc":1350000,"fee":13500,"total":1363500,"listing":"2025-12-11","lockup":"미확약","tradeable":"2025-12-11","holding":null,"realized":1533350,"unrealized":null,"totalPnl":1533350,"returnRate":"113.6%"},{"seq":5,"name":"쿼드메디슨","broker":"NH투자증권","price":15000,"qty":170,"alloc":2550000,"fee":25500,"total":2575500,"listing":"2025-12-12","lockup":"미확약","tradeable":"2025-12-12","holding":null,"realized":1420484,"unrealized":null,"totalPnl":1420484,"returnRate":"55.7%"},{"seq":6,"name":"티엠씨","broker":"미래에셋증권","price":9300,"qty":570,"alloc":5301000,"fee":53010,"total":5354010,"listing":"2025-12-15","lockup":"미확약","tradeable":"2025-12-15","holding":null,"realized":7237786,"unrealized":null,"totalPnl":7237786,"returnRate":"136.5%"},{"seq":7,"name":"메리츠제1호기업인수목적","broker":"메리츠증권","price":2000,"qty":4783,"alloc":9566000,"fee":95660,"total":9661660,"listing":"2025-12-15","lockup":"미확약","tradeable":"2025-12-15","holding":null,"realized":4262720,"unrealized":null,"totalPnl":4262720,"returnRate":"44.6%"},{"seq":8,"name":"아크릴","broker":"신한투자증권","price":19500,"qty":1176,"alloc":22932000,"fee":229320,"total":23161320,"listing":"2025-12-16","lockup":"15일","tradeable":"2026-01-02","holding":null,"realized":13423451,"unrealized":null,"totalPnl":13423451,"returnRate":"58.5%"},{"seq":9,"name":"나라스페이스테크놀로지","broker":"삼성증권","price":16500,"qty":244,"alloc":4026000,"fee":40260,"total":4066260,"listing":"2025-12-16","lockup":"미확약","tradeable":"2025-12-16","holding":null,"realized":4244066,"unrealized":null,"totalPnl":4244066,"returnRate":"105.4%"},{"seq":10,"name":"알지노믹스","broker":"삼성증권","price":22500,"qty":110,"alloc":2475000,"fee":24750,"total":2499750,"listing":"2025-12-18","lockup":"15일","tradeable":"2026-01-02","holding":null,"realized":14559102,"unrealized":null,"totalPnl":14559102,"returnRate":"588.2%"},{"seq":11,"name":"미래에셋비전기업인수목적11호","broker":"미래에셋증권","price":2000,"qty":1070,"alloc":2140000,"fee":0,"total":2140000,"listing":"2025-12-22","lockup":"미확약","tradeable":"2025-12-22","holding":null,"realized":2018961,"unrealized":null,"totalPnl":2018961,"returnRate":"94.3%"},{"seq":12,"name":"삼진식품","broker":"대신증권","price":7600,"qty":301,"alloc":2287600,"fee":22876,"total":2310476,"listing":"2025-12-22","lockup":"미확약","tradeable":"2025-12-22","holding":null,"realized":4343302,"unrealized":null,"totalPnl":4343302,"returnRate":"189.9%"},{"seq":13,"name":"하나36호기업인수목적","broker":"하나증권","price":2000,"qty":464,"alloc":928000,"fee":9280,"total":937280,"listing":"2025-12-22","lockup":"미확약","tradeable":"2025-12-22","holding":null,"realized":458342,"unrealized":null,"totalPnl":458342,"returnRate":"49.4%"},{"seq":14,"name":"미래에셋비전기업인수목적10호","broker":"미래에셋증권","price":2000,"qty":750,"alloc":1500000,"fee":0,"total":1500000,"listing":"2025-12-23","lockup":"미확약","tradeable":"2025-12-23","holding":null,"realized":2274569,"unrealized":null,"totalPnl":2274569,"returnRate":"151.6%"},{"seq":15,"name":"리브스메드","broker":"삼성증권","price":55000,"qty":183,"alloc":10065000,"fee":100650,"total":10165650,"listing":"2025-12-24","lockup":"미확약","tradeable":"2025-12-24","holding":null,"realized":1976163,"unrealized":null,"totalPnl":1976163,"returnRate":"19.6%"},{"seq":16,"name":"세미파이브","broker":"삼성증권","price":24000,"qty":843,"alloc":20232000,"fee":202320,"total":20434320,"listing":"2025-12-24","lockup":"1개월","tradeable":"2026-01-29","holding":843,"realized":null,"unrealized":4889400,"totalPnl":4889400,"closePrice":29800,"returnRate":"24.2%"}];
+
+const fmt = n => n == null ? '-' : n.toLocaleString('ko-KR');
+const today = new Date();
+const todayStr = today.toISOString().slice(0,10);
+const weekday = ['일','월','화','수','목','금','토'][today.getDay()];
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+}
+
+function getStatus(d) {
+  const ls = d.listing, ts = d.tradeable;
+  if(d.holding) {
+    if(todayStr < ts) return 'lockup';
+    return 'sellable';
+  }
+  if(d.realized != null || d.totalPnl != null && !d.holding) return 'completed';
+  if(todayStr < ls) return 'waiting';
+  if(todayStr === ls) return 'listing-today';
+  return 'completed';
+}
+
+function renderStats() {
+  const totalInv = DATA.reduce((s,d) => s + (d.total||0), 0);
+  const totalReal = DATA.reduce((s,d) => s + (d.realized||0), 0);
+  const totalUnreal = DATA.reduce((s,d) => s + (d.unrealized||0), 0);
+  const holding = DATA.filter(d => d.holding);
+  const completed = DATA.filter(d => !d.holding);
+  document.getElementById('totalInvest').textContent = fmt(totalInv) + '원';
+  document.getElementById('totalRealized').textContent = '+' + fmt(totalReal) + '원';
+  document.getElementById('totalUnrealized').textContent = '+' + fmt(totalUnreal) + '원';
+  document.getElementById('totalCount').textContent = DATA.length + '건';
+  document.getElementById('countSub').textContent = `완료 ${completed.length} / 보유 ${holding.length}`;
+}
+
+function renderChecklist() {
+  const area = document.getElementById('checklistArea');
+  let html = '';
+  let taskCount = 0;
+
+  // 보유 중 종목
+  const holding = DATA.filter(d => d.holding);
+  if(holding.length) {
+    holding.forEach(d => {
+      const isLockup = todayStr < d.tradeable;
+      const isSellable = todayStr >= d.tradeable;
+      taskCount++;
+      if(isLockup) {
+        html += `<div class="checklist-section">
+          <div class="checklist-title"><span class="tag tag-yellow">매일</span> ${d.name} - 락업 중 (매매가능일: ${d.tradeable})</div>
+          <div class="check-item"><input type="checkbox"><div>오전 9시 기준가 입력<div class="check-detail">전일 종가로 자산운용시스템 단가관리 입력 필수 (현재종가: ${fmt(d.closePrice)}원)</div></div></div>
+        </div>`;
+      } else {
+        html += `<div class="checklist-section">
+          <div class="checklist-title"><span class="tag tag-yellow">매일</span> ${d.name} - 매도가능 (매매가능일 경과)</div>
+          <div class="check-item"><input type="checkbox"><div>오전 9시 기준가 입력<div class="check-detail">전일 종가로 자산운용시스템 단가관리 입력 (현재종가: ${fmt(d.closePrice)}원)</div></div></div>
+          <div class="check-item"><input type="checkbox"><div>운용사 매도 여부 확인</div></div>
+          <div class="check-item"><input type="checkbox"><div>(매도 시) 외부망 - 운용사 매도거래내역 엑셀 확인</div></div>
+          <div class="check-item"><input type="checkbox"><div>(매도 시) 자산운용시스템 주식 거래 > 매도거래 입력</div></div>
+          <div class="check-item"><input type="checkbox"><div>(매도 시) 카카오톡 매도 보고 - 단톡방 전송</div></div>
+        </div>`;
+      }
+    });
+  }
+
+  if(taskCount === 0) {
+    html += `<div class="checklist-section"><div class="checklist-title"><span class="tag tag-green">완료</span> 오늘 처리할 업무가 없습니다</div></div>`;
+  }
+
+  area.innerHTML = html;
+  document.getElementById('todayBadge').textContent = taskCount;
+}
+
+function renderTable() {
+  const body = document.getElementById('tableBody');
+  document.getElementById('allCount').textContent = DATA.length;
+  body.innerHTML = DATA.map(d => {
+    const st = getStatus(d);
+    const stLabel = st==='completed' ? '완료' : st==='lockup' ? '락업중' : st==='sellable' ? '매도가능' : st==='waiting' ? '상장대기' : '상장일';
+    const stClass = st==='completed' ? 'completed' : st==='lockup' || st==='sellable' ? 'holding' : 'waiting';
+    const pnlClass = (d.totalPnl||0) >= 0 ? 'pnl-pos' : 'pnl-neg';
+    return `<tr data-status="${st}">
+      <td>${d.seq}</td><td>${d.name}</td><td>${d.broker}</td>
+      <td class="num">${fmt(d.price)}</td><td class="num">${fmt(d.qty)}</td>
+      <td class="num">${fmt(d.alloc)}</td><td class="num">${fmt(d.total)}</td>
+      <td>${d.listing}</td><td>${d.lockup}</td><td class="num">${d.holding||'-'}</td>
+      <td class="num ${pnlClass}">${fmt(d.realized)}</td>
+      <td class="num ${pnlClass}">${fmt(d.unrealized)}</td>
+      <td class="num ${pnlClass}">${fmt(d.totalPnl)}</td>
+      <td class="num">${d.returnRate}</td>
+      <td><span class="status-badge status-${stClass}">${stLabel}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function filterTable(f, el) {
+  document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('#tableBody tr').forEach(tr => {
+    if(f==='all') { tr.style.display=''; return; }
+    const st = tr.dataset.status;
+    if(f==='completed') tr.style.display = st==='completed' ? '' : 'none';
+    else if(f==='holding') tr.style.display = (st==='lockup'||st==='sellable') ? '' : 'none';
+  });
+}
+
+function renderHolding() {
+  const area = document.getElementById('holdingArea');
+  const holding = DATA.filter(d => d.holding);
+  if(!holding.length) { area.innerHTML = '<div class="checklist-section"><div class="checklist-title">현재 보유 중인 종목이 없습니다</div></div>'; return; }
+  area.innerHTML = holding.map(d => `
+    <div class="checklist-section">
+      <div class="checklist-title">${d.name} <span class="tag tag-yellow">${d.lockup}</span></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px;">
+        <div><div class="stat-label">공모단가</div><div style="font-family:'JetBrains Mono';font-size:15px;font-weight:700;">${fmt(d.price)}원</div></div>
+        <div><div class="stat-label">보유수량</div><div style="font-family:'JetBrains Mono';font-size:15px;font-weight:700;">${fmt(d.holding)}주</div></div>
+        <div><div class="stat-label">현재종가</div><div style="font-family:'JetBrains Mono';font-size:15px;font-weight:700;">${fmt(d.closePrice)}원</div></div>
+        <div><div class="stat-label">평가손익</div><div style="font-family:'JetBrains Mono';font-size:15px;font-weight:700;color:var(--green);">+${fmt(d.unrealized)}원</div></div>
+      </div>
+      <div style="margin-top:12px;font-size:12px;color:var(--text2);">배정금액: ${fmt(d.alloc)}원 | 매매가능일: ${d.tradeable} | 수익률: ${d.returnRate}</div>
+    </div>
+  `).join('');
+}
+
+function renderCompleted() {
+  const comp = DATA.filter(d => !d.holding && d.realized);
+  document.getElementById('compCount').textContent = comp.length;
+  document.getElementById('compBody').innerHTML = comp.map(d => `<tr>
+    <td>${d.seq}</td><td>${d.name}</td><td class="num">${fmt(d.price)}</td>
+    <td class="num">${fmt(d.alloc)}</td><td class="num pnl-pos">${fmt(d.realized)}</td>
+    <td class="num">${d.returnRate}</td>
+  </tr>`).join('');
+}
+
+function renderCalendar() {
+  const events = [
+    {date:'03/06', title:'[블랙보드일임/매도완료] 에스팀', type:'blue', desc:'매도단가 34,000원 / 수익률 297.9%'},
+    {date:'03/10', title:'[블랙보드일임/수도결제] 에스팀', type:'orange', desc:'T+2 수도대금결제'},
+    {date:'03/16', title:'[블랙보드일임/청약] 아이엠바이오로직스 주금납입', type:'yellow', desc:'이체금액 498,940원'},
+    {date:'03/20', title:'[블랙보드일임/상장및매도가능일] 아이엠바이오로직스', type:'blue', desc:'공모가 26,000원 / 19주'},
+  ];
+  document.getElementById('calendarArea').innerHTML = events.map(e => `
+    <div class="cal-event ${e.type}">
+      <div class="cal-date">${e.date}</div>
+      <div><div class="cal-title">${e.title}</div><div class="cal-desc">${e.desc}</div></div>
+    </div>
+  `).join('');
+}
+
+// Init
+document.getElementById('todayDate').textContent = `${todayStr} (${weekday})`;
+renderStats();
+renderChecklist();
+renderTable();
+renderHolding();
+renderCompleted();
+renderCalendar();
+</script>
+</body>
+</html>
