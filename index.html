@@ -239,6 +239,7 @@ tbody tr:hover { background:var(--surface2); }
       </div>
       <div id="ilimSummaryArea" style="margin-bottom:20px;"></div>
       <div id="checklistArea"></div>
+      <div id="completedChecklistArea"></div>
     </div>
 
     <!-- 캘린더 -->
@@ -436,47 +437,109 @@ function renderIlimSummary() {
   area.innerHTML = html;
 }
 
-function renderChecklist() {
-  const area = document.getElementById('checklistArea');
-  let html = '';
-  let taskCount = 0;
+// 체크리스트 완료 상태 localStorage 관리
+function getCheckState() {
+  try { return JSON.parse(localStorage.getItem('checkState_'+todayStr)) || {}; } catch(e) { return {}; }
+}
+function saveCheckState(state) {
+  localStorage.setItem('checkState_'+todayStr, JSON.stringify(state));
+}
+function toggleCheck(taskId) {
+  const state = getCheckState();
+  if(state[taskId]) {
+    delete state[taskId];
+  } else {
+    const now = new Date();
+    const ts = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+    state[taskId] = ts;
+  }
+  saveCheckState(state);
+  renderChecklist();
+}
+
+function buildTaskList() {
+  const tasks = [];
   const ilims = [...new Set(DATA.map(d => d.ilim))];
-
   ilims.forEach(ilim => {
-    const items = DATA.filter(d => d.ilim === ilim);
-    const holding = items.filter(d => d.holding);
-    if(!holding.length) return;
-
-    const color = ILIM_COLORS[ilim] || '#60a5fa';
-    html += `<div class="ilim-section-title" style="border-left-color:${color};margin-top:16px;">${ilim}</div>`;
-
-    holding.forEach(d => {
+    DATA.filter(d => d.ilim === ilim && d.holding).forEach(d => {
       const isLockup = todayStr < d.tradeable;
-      taskCount++;
       if(isLockup) {
-        html += `<div class="checklist-section">
-          <div class="checklist-title"><span class="tag tag-yellow">매일</span> ${d.name} - 락업 중 (매매가능일: ${d.tradeable})</div>
-          <div class="check-item"><input type="checkbox"><div>오전 9시 기준가 입력<div class="check-detail">전일 종가로 자산운용시스템 단가관리 입력 필수 (현재종가: ${fmt(d.closePrice)}원)</div></div></div>
-        </div>`;
+        tasks.push({id:`${d.name}_lockup_1`,ilim,name:d.name,label:`${d.name} - 락업 중 (매매가능일: ${d.tradeable})`,text:'오전 9시 기준가 입력',detail:`전일 종가로 자산운용시스템 단가관리 입력 필수 (현재종가: ${fmt(d.closePrice)}원)`});
       } else {
-        html += `<div class="checklist-section">
-          <div class="checklist-title"><span class="tag tag-yellow">매일</span> ${d.name} - 매도가능 (매매가능일 경과)</div>
-          <div class="check-item"><input type="checkbox"><div>오전 9시 기준가 입력<div class="check-detail">전일 종가로 자산운용시스템 단가관리 입력 (현재종가: ${fmt(d.closePrice)}원)</div></div></div>
-          <div class="check-item"><input type="checkbox"><div>운용사 매도 여부 확인</div></div>
-          <div class="check-item"><input type="checkbox"><div>(매도 시) 외부망 - 운용사 매도거래내역 엑셀 확인</div></div>
-          <div class="check-item"><input type="checkbox"><div>(매도 시) 자산운용시스템 주식 거래 > 매도거래 입력</div></div>
-          <div class="check-item"><input type="checkbox"><div>(매도 시) 카카오톡 매도 보고 - 단톡방 전송</div></div>
-        </div>`;
+        const items = [
+          {suffix:'1',text:'오전 9시 기준가 입력',detail:`전일 종가로 자산운용시스템 단가관리 입력 (현재종가: ${fmt(d.closePrice)}원)`},
+          {suffix:'2',text:'운용사 매도 여부 확인',detail:''},
+          {suffix:'3',text:'(매도 시) 외부망 - 운용사 매도거래내역 엑셀 확인',detail:''},
+          {suffix:'4',text:'(매도 시) 자산운용시스템 주식 거래 > 매도거래 입력',detail:''},
+          {suffix:'5',text:'(매도 시) 카카오톡 매도 보고 - 단톡방 전송',detail:''}
+        ];
+        items.forEach(it => {
+          tasks.push({id:`${d.name}_sell_${it.suffix}`,ilim,name:d.name,label:`${d.name} - 매도가능 (매매가능일 경과)`,text:it.text,detail:it.detail});
+        });
       }
     });
   });
+  return tasks;
+}
 
-  if(taskCount === 0) {
+function renderChecklist() {
+  const area = document.getElementById('checklistArea');
+  const doneArea = document.getElementById('completedChecklistArea');
+  const state = getCheckState();
+  const tasks = buildTaskList();
+
+  const pending = tasks.filter(t => !state[t.id]);
+  const done = tasks.filter(t => state[t.id]);
+
+  // 미완료 업무 (종목별 그룹)
+  let html = '';
+  if(pending.length) {
+    const groups = {};
+    pending.forEach(t => {
+      const key = t.ilim+'|'+t.label;
+      if(!groups[key]) groups[key] = {ilim:t.ilim,label:t.label,items:[]};
+      groups[key].items.push(t);
+    });
+    let lastIlim = '';
+    Object.values(groups).forEach(g => {
+      if(g.ilim !== lastIlim) {
+        const color = ILIM_COLORS[g.ilim] || '#60a5fa';
+        html += `<div class="ilim-section-title" style="border-left-color:${color};margin-top:16px;">${g.ilim}</div>`;
+        lastIlim = g.ilim;
+      }
+      html += `<div class="checklist-section"><div class="checklist-title"><span class="tag tag-yellow">매일</span> ${g.label}</div>`;
+      g.items.forEach(t => {
+        html += `<div class="check-item"><input type="checkbox" onchange="toggleCheck('${t.id}')"><div>${t.text}${t.detail?'<div class="check-detail">'+t.detail+'</div>':''}</div></div>`;
+      });
+      html += '</div>';
+    });
+  } else if(tasks.length) {
+    html += `<div class="checklist-section"><div class="checklist-title"><span class="tag tag-green">완료</span> 오늘 업무를 모두 완료했습니다</div></div>`;
+  } else {
     html += `<div class="checklist-section"><div class="checklist-title"><span class="tag tag-green">완료</span> 오늘 처리할 업무가 없습니다</div></div>`;
   }
-
   area.innerHTML = html;
-  document.getElementById('todayBadge').textContent = taskCount;
+
+  // 완료된 할일
+  let doneHtml = '';
+  if(done.length) {
+    doneHtml += `<div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--border);">`;
+    doneHtml += `<div style="font-size:14px;font-weight:700;margin-bottom:12px;color:var(--text2);">완료된 할일 (${done.length}건)</div>`;
+    done.forEach(t => {
+      const ts = state[t.id];
+      doneHtml += `<div class="check-item" style="opacity:0.5;border-bottom:1px solid var(--border);padding:8px 0;">
+        <input type="checkbox" checked onchange="toggleCheck('${t.id}')" style="accent-color:var(--green);">
+        <div style="flex:1;"><span style="text-decoration:line-through;">${t.text}</span>
+          <span style="font-size:10px;color:var(--text2);margin-left:6px;">[${t.name}]</span>
+          <div style="font-size:10px;color:var(--green);margin-top:2px;">완료: ${ts}</div>
+        </div>
+      </div>`;
+    });
+    doneHtml += '</div>';
+  }
+  doneArea.innerHTML = doneHtml;
+
+  document.getElementById('todayBadge').textContent = pending.length;
 }
 
 const LAST_UPDATE = '2026-03-18 23:37';
