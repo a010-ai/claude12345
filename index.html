@@ -320,18 +320,28 @@ tbody tr:hover { background:var(--surface2); }
           <div><span style="color:var(--text2);">위탁자:</span> (주)오케이저축은행</div>
           <div><span style="color:var(--text2);">기표일자:</span> 2025-11-24</div>
           <div><span style="color:var(--text2);">투자원금:</span> 2,000,000,000원</div>
-          <div><span style="color:var(--text2);">경과일수:</span> <span id="elapsedDays"></span>일</div>
-          <div><span style="color:var(--text2);">캘린더:</span> IPO공모주(블랙보드)일정</div>
+          <div><span style="color:var(--text2);">경과일수:</span> <span id="elapsedDaysBB"></span>일</div>
+          <div><span style="color:var(--text2);">기준 엑셀:</span> ipo공모주참여현황_20260320.xlsx</div>
         </div>
-        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
-          <div style="text-align:center;"><div class="stat-label">단순수익률</div><div style="font-family:'JetBrains Mono';font-size:18px;font-weight:700;color:var(--green);" id="simpleReturn">-</div></div>
-          <div style="text-align:center;"><div class="stat-label">연환산수익률</div><div style="font-family:'JetBrains Mono';font-size:18px;font-weight:700;color:var(--accent2);" id="annualReturn">-</div></div>
-          <div style="text-align:center;"><div class="stat-label">기준 엑셀</div><div style="font-size:11px;margin-top:6px;color:var(--text2);">ipo공모주참여현황_v3.xlsx</div></div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+          <div style="text-align:center;"><div class="stat-label">단순수익률</div><div style="font-family:'JetBrains Mono';font-size:18px;font-weight:700;color:var(--green);" id="simpleReturnBB">-</div></div>
+          <div style="text-align:center;"><div class="stat-label">연환산수익률</div><div style="font-family:'JetBrains Mono';font-size:18px;font-weight:700;color:var(--accent2);" id="annualReturnBB">-</div></div>
         </div>
       </div>
-      <div class="checklist-section">
-        <div class="checklist-title">마크일임 <span class="tag tag-yellow">미등록</span></div>
-        <div class="check-item" style="border:none;padding:8px 0;">추후 등록 예정</div>
+      <div class="checklist-section" style="border-left:3px solid #a78bfa;">
+        <div class="checklist-title">마크일임 <span class="tag tag-green">활성</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;font-size:13px;padding:4px 0;">
+          <div><span style="color:var(--text2);">운용사:</span> 마크자산운용(주)</div>
+          <div><span style="color:var(--text2);">위탁자:</span> (주)오케이저축은행</div>
+          <div><span style="color:var(--text2);">기표일자:</span> 2025-09-27</div>
+          <div><span style="color:var(--text2);">투자원금:</span> 2,000,000,000원</div>
+          <div><span style="color:var(--text2);">경과일수:</span> <span id="elapsedDaysMK"></span>일</div>
+          <div><span style="color:var(--text2);">기준 엑셀:</span> ipo공모주참여현황_20260320.xlsx</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+          <div style="text-align:center;"><div class="stat-label">단순수익률</div><div style="font-family:'JetBrains Mono';font-size:18px;font-weight:700;color:var(--green);" id="simpleReturnMK">-</div></div>
+          <div style="text-align:center;"><div class="stat-label">연환산수익률</div><div style="font-family:'JetBrains Mono';font-size:18px;font-weight:700;color:var(--accent2);" id="annualReturnMK">-</div></div>
+        </div>
       </div>
     </div>
   </main>
@@ -711,16 +721,19 @@ renderHolding();
 renderCompleted();
 renderCalendar();
 renderPriceStatus();
-// 기표일자 기반 계산
-const startDate = new Date('2025-11-24');
-const investAmount = 2000000000;
-const elapsed = Math.floor((today - startDate) / (1000*60*60*24));
-document.getElementById('elapsedDays').textContent = elapsed;
-const totalPnlAll = DATA.reduce((s,d) => s + (d.totalPnl||0), 0);
-const simpleRate = (totalPnlAll / investAmount * 100).toFixed(2);
-const annualRate = ((Math.pow(1 + totalPnlAll/investAmount, 365/elapsed) - 1) * 100).toFixed(2);
-document.getElementById('simpleReturn').textContent = simpleRate + '%';
-document.getElementById('annualReturn').textContent = annualRate + '%';
+// 일임별 수익률 계산
+function calcIlimReturn(ilimName, startDateStr, investAmt, elapsedId, simpleId, annualId) {
+  const sd = new Date(startDateStr);
+  const el = Math.floor((today - sd) / (1000*60*60*24));
+  document.getElementById(elapsedId).textContent = el;
+  const pnl = DATA.filter(d => d.ilim === ilimName).reduce((s,d) => s + (d.totalPnl||0), 0);
+  const sr = (pnl / investAmt * 100).toFixed(2);
+  const ar = el > 0 ? ((Math.pow(1 + pnl/investAmt, 365/el) - 1) * 100).toFixed(2) : '0.00';
+  document.getElementById(simpleId).textContent = sr + '%';
+  document.getElementById(annualId).textContent = ar + '%';
+}
+calcIlimReturn('블랙보드일임', '2025-11-24', 2000000000, 'elapsedDaysBB', 'simpleReturnBB', 'annualReturnBB');
+calcIlimReturn('마크일임', '2025-09-27', 2000000000, 'elapsedDaysMK', 'simpleReturnMK', 'annualReturnMK');
 </script>
 </body>
 </html>
