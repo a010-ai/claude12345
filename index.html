@@ -519,7 +519,7 @@ function renderTable() {
       <td class="num ${pnlClass}">${fmt(d.realized)}</td>
       <td class="num ${pnlClass}">${fmt(d.unrealized)}</td>
       <td class="num ${pnlClass}">${fmt(d.totalPnl)}</td>
-      <td class="num">${d.returnRate}</td>
+      <td class="num">${d.returnRate||'-'}</td>
       <td><span class="status-badge status-${stClass}">${stLabel}</span></td>
     </tr>`;
   }).join('');
