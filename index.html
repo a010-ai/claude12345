@@ -222,6 +222,9 @@ tbody tr:hover { background:var(--surface2); }
       <div class="nav-item" onclick="showPage('info',this)">
         <span class="nav-icon">&#9881;</span> 일임계약 정보
       </div>
+      <div class="nav-item" onclick="showPage('email',this)">
+        <span class="nav-icon">&#9993;</span> 이메일주소 설정
+      </div>
     </div>
   </aside>
 
@@ -241,6 +244,7 @@ tbody tr:hover { background:var(--surface2); }
       <div id="ilimSummaryArea" style="margin-bottom:20px;"></div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
         <button onclick="exportChecklist()" style="background:var(--green-bg);border:1px solid var(--green);color:var(--green);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:6px;">&#128190; 업무일지 저장 (Excel)</button>
+        <button onclick="sendTeamMail('today')" style="background:var(--blue-bg);border:1px solid var(--accent);color:var(--accent2);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:6px;">&#9993; 팀메일 발송</button>
         <span id="exportMsg" style="font-size:11px;color:var(--text2);"></span>
       </div>
       <div id="checklistArea"></div>
@@ -256,6 +260,7 @@ tbody tr:hover { background:var(--surface2); }
         <button onclick="calNext()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:13px;">&rarr;</button>
         <button onclick="calToday()" style="background:var(--blue-bg);border:1px solid var(--accent);color:var(--accent2);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;margin-left:4px;">오늘</button>
         <a href="https://calendar.google.com/calendar/r?cid=b0358280ed2bfa1daeb67a337327bda347135b557172b277247b007914b9dfd6@group.calendar.google.com" target="_blank" style="background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;text-decoration:none;display:inline-flex;align-items:center;gap:5px;margin-left:4px;">&#128279; Google Calendar</a>
+        <button onclick="sendTeamMail('calendar')" style="background:var(--blue-bg);border:1px solid var(--accent);color:var(--accent2);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;display:inline-flex;align-items:center;gap:5px;">&#9993; 팀메일 발송</button>
         <span style="color:var(--text2);font-size:11px;margin-left:8px;">|</span>
         <div id="ilimToggles" style="display:flex;gap:6px;"></div>
       </div>
@@ -345,6 +350,24 @@ tbody tr:hover { background:var(--surface2); }
           <div style="text-align:center;"><div class="stat-label">단순수익률</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:18px;font-weight:700;color:var(--green);" id="simpleReturnMK">-</div></div>
           <div style="text-align:center;"><div class="stat-label">연환산수익률</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:18px;font-weight:700;color:var(--accent2);" id="annualReturnMK">-</div></div>
         </div>
+      </div>
+    </div>
+
+    <!-- 이메일주소 설정 -->
+    <div id="page-email" class="page">
+      <div class="page-header"><h2>이메일주소 설정</h2><p>팀메일 발송 대상 이메일 관리</p></div>
+      <div class="checklist-section">
+        <div class="checklist-title">이메일 추가</div>
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+          <input type="email" id="newEmailInput" placeholder="이메일 주소 입력" style="flex:1;padding:10px 14px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:'Noto Sans KR',sans-serif;outline:none;" onkeydown="if(event.key==='Enter')addEmail()">
+          <button onclick="addEmail()" style="background:var(--accent);color:#fff;border:none;padding:10px 20px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Noto Sans KR',sans-serif;white-space:nowrap;">추가</button>
+        </div>
+        <div id="emailPwError" style="color:var(--red);font-size:12px;min-height:20px;"></div>
+      </div>
+      <div class="checklist-section">
+        <div class="checklist-title">등록된 이메일 (<span id="emailCount">0</span>건)</div>
+        <div id="emailListArea"></div>
+        <div style="margin-top:12px;font-size:11px;color:var(--text2);">이메일 추가/삭제 시 비밀번호 인증이 필요합니다.</div>
       </div>
     </div>
   </main>
@@ -603,6 +626,94 @@ function exportChecklist() {
   document.getElementById('exportMsg').textContent = `저장 완료 (${ts}) — output2 폴더에 저장해주세요`;
 }
 
+// 이메일 관리 (localStorage)
+function getEmails() {
+  try { return JSON.parse(localStorage.getItem('teamEmails')) || []; } catch(e) { return []; }
+}
+function saveEmails(list) {
+  localStorage.setItem('teamEmails', JSON.stringify(list));
+  renderEmailList();
+}
+function promptPw(action) {
+  const pw = prompt('비밀번호를 입력하세요 (이메일 ' + action + ')');
+  return pw === 'oksb7979';
+}
+function addEmail() {
+  const input = document.getElementById('newEmailInput');
+  const errEl = document.getElementById('emailPwError');
+  const email = input.value.trim();
+  if(!email) { errEl.textContent = '이메일 주소를 입력하세요.'; return; }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent = '올바른 이메일 형식이 아닙니다.'; return; }
+  const list = getEmails();
+  if(list.includes(email)) { errEl.textContent = '이미 등록된 이메일입니다.'; return; }
+  if(!promptPw('추가')) { errEl.textContent = '비밀번호가 올바르지 않습니다.'; return; }
+  list.push(email);
+  saveEmails(list);
+  input.value = '';
+  errEl.textContent = '';
+}
+function removeEmail(email) {
+  const errEl = document.getElementById('emailPwError');
+  if(!promptPw('삭제')) { errEl.textContent = '비밀번호가 올바르지 않습니다.'; return; }
+  const list = getEmails().filter(e => e !== email);
+  saveEmails(list);
+  errEl.textContent = '';
+}
+function renderEmailList() {
+  const list = getEmails();
+  document.getElementById('emailCount').textContent = list.length;
+  const area = document.getElementById('emailListArea');
+  if(!list.length) { area.innerHTML = '<div style="font-size:13px;color:var(--text2);padding:10px 0;">등록된 이메일이 없습니다.</div>'; return; }
+  area.innerHTML = list.map((em,i) => `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-size:12px;color:var(--text2);min-width:24px;">${i+1}</span>
+      <span style="font-size:13px;">${em}</span>
+    </div>
+    <button onclick="removeEmail('${em}')" style="background:var(--red-bg);border:1px solid var(--red);color:var(--red);padding:4px 12px;border-radius:6px;cursor:pointer;font-size:11px;font-family:'Noto Sans KR',sans-serif;">삭제</button>
+  </div>`).join('');
+}
+
+// 팀메일 발송 (mailto)
+function sendTeamMail(source) {
+  const emails = getEmails();
+  if(!emails.length) { alert('등록된 이메일이 없습니다.\n설정 > 이메일주소 설정에서 이메일을 추가하세요.'); return; }
+
+  let subject = '', body = '';
+  if(source === 'today') {
+    subject = `[IPO공모주] ${todayStr} 오늘의 할일`;
+    const state = getCheckState();
+    const tasks = buildTaskList();
+    const pending = tasks.filter(t => !state[t.id]);
+    const done = tasks.filter(t => state[t.id]);
+    body = `IPO 공모주 일임계약 업무 현황 (${todayStr})\n\n`;
+    if(pending.length) {
+      body += `■ 미완료 (${pending.length}건)\n`;
+      pending.forEach(t => body += `- [${t.ilim}] ${t.name}: ${t.text}\n`);
+      body += '\n';
+    }
+    if(done.length) {
+      body += `■ 완료 (${done.length}건)\n`;
+      done.forEach(t => body += `- [${t.ilim}] ${t.name}: ${t.text} (완료: ${state[t.id]})\n`);
+    }
+    if(!tasks.length) body += '오늘 처리할 업무가 없습니다.\n';
+  } else {
+    const prefix = `${calYear}-${String(calMonth+1).padStart(2,'0')}`;
+    const monthEvts = getFilteredEvents().filter(e => e.date.startsWith(prefix)).sort((a,b) => a.date.localeCompare(b.date));
+    subject = `[IPO공모주] ${calYear}년 ${calMonth+1}월 캘린더 일정`;
+    body = `IPO 공모주 캘린더 일정 (${calYear}년 ${calMonth+1}월)\n\n`;
+    if(monthEvts.length) {
+      monthEvts.forEach(e => {
+        const d = new Date(e.date);
+        const dow = ['일','월','화','수','목','금','토'][d.getDay()];
+        body += `${e.date}(${dow}) ${e.title}\n  ${e.desc}\n\n`;
+      });
+    } else { body += '등록된 일정이 없습니다.\n'; }
+  }
+
+  const mailto = `mailto:${emails.join(',')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.open(mailto);
+}
+
 const LAST_UPDATE = '2026-03-18 23:37';
 const PRICE_UPDATE = '';  // 종가 다운로드 반영 시점 (빈값=미반영)
 
@@ -838,6 +949,7 @@ renderHolding();
 renderCompleted();
 renderCalendar();
 renderPriceStatus();
+renderEmailList();
 // 일임별 수익률 계산
 function calcIlimReturn(ilimName, startDateStr, investAmt, elapsedId, simpleId, annualId) {
   const sd = new Date(startDateStr);
