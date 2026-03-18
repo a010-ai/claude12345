@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IPO 공모주 일임계약 업무 대시보드</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
 <style>
 :root {
   --bg: #131825;
@@ -238,6 +239,10 @@ tbody tr:hover { background:var(--surface2); }
         <div class="stat-card"><div class="stat-label">총 종목수</div><div class="stat-value" id="totalCount">-</div><div class="stat-sub" id="countSub"></div></div>
       </div>
       <div id="ilimSummaryArea" style="margin-bottom:20px;"></div>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <button onclick="exportChecklist()" style="background:var(--green-bg);border:1px solid var(--green);color:var(--green);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:6px;">&#128190; 업무일지 저장 (Excel)</button>
+        <span id="exportMsg" style="font-size:11px;color:var(--text2);"></span>
+      </div>
       <div id="checklistArea"></div>
       <div id="completedChecklistArea"></div>
     </div>
@@ -540,6 +545,62 @@ function renderChecklist() {
   doneArea.innerHTML = doneHtml;
 
   document.getElementById('todayBadge').textContent = pending.length;
+}
+
+// 업무일지 Excel 저장 (localStorage 전체 누적 데이터 → 날짜별 시트)
+function exportChecklist() {
+  const allTasks = buildTaskList();
+  if(!allTasks.length) { document.getElementById('exportMsg').textContent = '저장할 업무가 없습니다.'; return; }
+
+  // localStorage에서 모든 날짜의 checkState 수집
+  const dateKeys = [];
+  for(let i=0; i<localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if(k && k.startsWith('checkState_')) dateKeys.push(k);
+  }
+  dateKeys.sort();
+
+  if(!dateKeys.length) { document.getElementById('exportMsg').textContent = '완료된 업무가 없습니다.'; return; }
+
+  const wb = XLSX.utils.book_new();
+
+  dateKeys.forEach(key => {
+    const dateStr = key.replace('checkState_','');
+    const sheetName = dateStr.replace(/-/g,'');
+    let state;
+    try { state = JSON.parse(localStorage.getItem(key)) || {}; } catch(e) { return; }
+
+    const doneIds = Object.keys(state);
+    if(!doneIds.length) return;
+
+    // 해당 날짜의 task 목록 재구성 (현재 DATA 기준)
+    const rows = [['순번','일임','종목명','업무내용','완료시각']];
+    let seq = 1;
+    doneIds.forEach(id => {
+      const task = allTasks.find(t => t.id === id);
+      if(task) {
+        rows.push([seq++, task.ilim, task.name, task.text, state[id]]);
+      } else {
+        // task가 DATA에서 사라진 경우에도 id에서 정보 추출
+        const parts = id.split('_');
+        const name = parts.slice(0, -2).join('_');
+        rows.push([seq++, '-', name || id, '-', state[id]]);
+      }
+    });
+
+    if(rows.length > 1) {
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = [{wch:6},{wch:14},{wch:20},{wch:40},{wch:18}];
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    }
+  });
+
+  if(!wb.SheetNames.length) { document.getElementById('exportMsg').textContent = '완료된 업무가 없습니다.'; return; }
+
+  XLSX.writeFile(wb, '업무일지.xlsx');
+  const now = new Date();
+  const ts = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  document.getElementById('exportMsg').textContent = `저장 완료 (${ts}) — output2 폴더에 저장해주세요`;
 }
 
 const LAST_UPDATE = '2026-03-18 23:37';
