@@ -430,8 +430,8 @@ function renderStats() {
   const holding = DATA.filter(d => d.holding);
   const completed = DATA.filter(d => !d.holding);
   document.getElementById('totalInvest').textContent = fmt(totalInv) + '원';
-  document.getElementById('totalRealized').textContent = '+' + fmt(totalReal) + '원';
-  document.getElementById('totalUnrealized').textContent = '+' + fmt(totalUnreal) + '원';
+  document.getElementById('totalRealized').textContent = (totalReal >= 0 ? '+' : '') + fmt(totalReal) + '원';
+  document.getElementById('totalUnrealized').textContent = (totalUnreal >= 0 ? '+' : '') + fmt(totalUnreal) + '원';
   document.getElementById('totalCount').textContent = DATA.length + '건';
   document.getElementById('countSub').textContent = `완료 ${completed.length} / 보유 ${holding.length}`;
 }
@@ -454,9 +454,9 @@ function renderIlimSummary() {
       <table class="ilim-mini-table">
         <tr><th>항목</th><th style="text-align:right">금액</th></tr>
         <tr><td>투자금액</td><td class="r">${fmt(inv)}원</td></tr>
-        <tr><td>실현손익</td><td class="r" style="color:var(--green)">+${fmt(real)}원</td></tr>
-        <tr><td>평가손익</td><td class="r" style="color:var(--yellow)">${unreal ? '+'+fmt(unreal)+'원' : '-'}</td></tr>
-        <tr><td>총손익</td><td class="r" style="color:var(--green)">+${fmt(totalPnl)}원</td></tr>
+        <tr><td>실현손익</td><td class="r" style="color:${real >= 0 ? 'var(--green)' : 'var(--red)'}">${real >= 0 ? '+' : ''}${fmt(real)}원</td></tr>
+        <tr><td>평가손익</td><td class="r" style="color:${unreal >= 0 ? 'var(--yellow)' : 'var(--red)'}">${unreal != null && unreal !== 0 ? (unreal >= 0 ? '+' : '') + fmt(unreal) + '원' : '-'}</td></tr>
+        <tr><td>총손익</td><td class="r" style="color:${totalPnl >= 0 ? 'var(--green)' : 'var(--red)'}">${totalPnl >= 0 ? '+' : ''}${fmt(totalPnl)}원</td></tr>
         <tr><td>종목수</td><td class="r">${items.length}건 (완료 ${compCnt} / 보유 ${holdCnt})</td></tr>
       </table>
     </div>`;
@@ -714,8 +714,8 @@ function sendTeamMail(source) {
   window.open(mailto);
 }
 
-const LAST_UPDATE = '2026-03-19 00:41';
-const PRICE_UPDATE = '2026-03-19 00:41';  // 종가 다운로드 반영 시점 (빈값=미반영)
+const LAST_UPDATE = '2026-03-19 01:19';
+const PRICE_UPDATE = '2026-03-19 01:19';  // 종가 다운로드 반영 시점 (빈값=미반영)
 
 function renderPriceStatus() {
   const statusEl = document.getElementById('priceUpdateStatus');
@@ -741,16 +741,18 @@ function renderTable() {
     const st = getStatus(d);
     const stLabel = st==='completed' ? '완료' : st==='lockup' ? '락업중' : st==='sellable' ? '매도가능' : st==='waiting' ? '상장대기' : '상장일';
     const stClass = st==='completed' ? 'completed' : st==='lockup' || st==='sellable' ? 'holding' : 'waiting';
-    const pnlClass = (d.totalPnl||0) >= 0 ? 'pnl-pos' : 'pnl-neg';
+    const realClass = (d.realized||0) >= 0 ? 'pnl-pos' : 'pnl-neg';
+    const unrealClass = (d.unrealized||0) >= 0 ? 'pnl-pos' : 'pnl-neg';
+    const totalClass = (d.totalPnl||0) >= 0 ? 'pnl-pos' : 'pnl-neg';
     const ilimShort = (d.ilim||'').replace('일임','');
     return `<tr data-status="${st}">
       <td>${d.seq}</td><td><span class="tag tag-blue" style="font-size:9px;">${ilimShort}</span></td><td>${d.name}</td><td>${d.broker}</td>
       <td class="num">${fmt(d.price)}</td><td class="num">${fmt(d.qty)}</td>
       <td class="num">${fmt(d.alloc)}</td><td class="num">${fmt(d.total)}</td>
       <td>${d.listing}</td><td>${d.lockup}</td><td class="num">${d.holding||'-'}</td>
-      <td class="num ${pnlClass}">${fmt(d.realized)}</td>
-      <td class="num ${pnlClass}">${fmt(d.unrealized)}</td>
-      <td class="num ${pnlClass}">${fmt(d.totalPnl)}</td>
+      <td class="num ${realClass}">${fmt(d.realized)}</td>
+      <td class="num ${unrealClass}">${fmt(d.unrealized)}</td>
+      <td class="num ${totalClass}">${fmt(d.totalPnl)}</td>
       <td class="num">${d.returnRate||'-'}</td>
       <td><span class="status-badge status-${stClass}">${stLabel}</span></td>
     </tr>`;
@@ -785,7 +787,7 @@ function renderHolding() {
         <div><div class="stat-label">공모단가</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:700;">${fmt(d.price)}원</div></div>
         <div><div class="stat-label">보유수량</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:700;">${fmt(d.holding)}주</div></div>
         <div><div class="stat-label">현재종가</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:700;">${fmt(d.closePrice)}원</div></div>
-        <div><div class="stat-label">평가손익</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:700;color:var(--green);">+${fmt(d.unrealized)}원</div></div>
+        <div><div class="stat-label">평가손익</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:700;color:${(d.unrealized||0) >= 0 ? 'var(--green)' : 'var(--red)'};">${(d.unrealized||0) >= 0 ? '+' : ''}${fmt(d.unrealized)}원</div></div>
       </div>
       <div style="margin-top:12px;font-size:12px;color:var(--text2);">배정금액: ${fmt(d.alloc)}원 | 매매가능일: ${d.tradeable} | 수익률: ${d.returnRate}</div>
     </div>`;
