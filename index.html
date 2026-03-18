@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>IPO 공모주 일임계약 업무 대시보드</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #131825;
@@ -58,7 +58,7 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
 .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:24px; }
 .stat-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:20px; }
 .stat-label { font-size:11px; color:var(--text2); font-weight:500; margin-bottom:8px; }
-.stat-value { font-size:24px; font-weight:900; font-family:'JetBrains Mono',monospace; }
+.stat-value { font-size:24px; font-weight:900; font-family:'Noto Sans KR',sans-serif; }
 .stat-sub { font-size:11px; color:var(--text2); margin-top:4px; }
 .stat-value.green { color:var(--green); }
 .stat-value.blue { color:var(--accent2); }
@@ -89,7 +89,7 @@ table { width:100%; border-collapse:collapse; font-size:12px; }
 thead th { background:var(--surface2); color:var(--text2); font-weight:600; padding:10px 12px; text-align:left; position:sticky; top:0; white-space:nowrap; }
 tbody td { padding:10px 12px; border-bottom:1px solid var(--border); white-space:nowrap; }
 tbody tr:hover { background:var(--surface2); }
-.num { text-align:right; font-family:'JetBrains Mono',monospace; font-size:11px; }
+.num { text-align:right; font-family:'Noto Sans KR',sans-serif; font-size:11px; }
 .pnl-pos { color:var(--green); }
 .pnl-neg { color:var(--red); }
 .status-badge { font-size:10px; font-weight:600; padding:3px 8px; border-radius:4px; display:inline-block; }
@@ -109,7 +109,7 @@ tbody tr:hover { background:var(--surface2); }
 .cal-event.yellow { border-left-color:var(--yellow); }
 .cal-event.blue { border-left-color:var(--accent); }
 .cal-event.orange { border-left-color:var(--orange); }
-.cal-date { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text2); min-width:80px; }
+.cal-date { font-family:'Noto Sans KR',sans-serif; font-size:12px; color:var(--text2); min-width:80px; }
 .cal-title { font-size:13px; font-weight:600; }
 .cal-desc { font-size:11px; color:var(--text2); margin-top:2px; }
 .ilim-summary { display:grid; grid-template-columns:repeat(auto-fit, minmax(320px,1fr)); gap:12px; }
@@ -118,7 +118,7 @@ tbody tr:hover { background:var(--surface2); }
 .ilim-card-title .dot { width:8px; height:8px; border-radius:50%; }
 .ilim-mini-table { width:100%; font-size:11px; border-collapse:collapse; }
 .ilim-mini-table th { text-align:left; color:var(--text2); font-weight:500; padding:4px 6px; border-bottom:1px solid var(--border); }
-.ilim-mini-table td { padding:4px 6px; font-family:'JetBrains Mono',monospace; font-size:11px; }
+.ilim-mini-table td { padding:4px 6px; font-family:'Noto Sans KR',sans-serif; font-size:11px; }
 .ilim-mini-table td.r { text-align:right; }
 .ilim-section-title { font-family:'Noto Sans KR',sans-serif; font-size:13px; font-weight:700; color:var(--text2); margin-bottom:10px; border-left:3px solid var(--accent); padding-left:10px; }
 .cal-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:2px; background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
@@ -192,7 +192,7 @@ tbody tr:hover { background:var(--surface2); }
   <aside class="sidebar" id="sidebarEl">
     <div class="sidebar-logo">
       <h1>IPO 공모주 대시보드</h1>
-      <p>(주)오케이저축은행 IB금융기획팀</p>
+      <p>(주)오케이저축은행 IB금융본부</p>
     </div>
     <div class="nav-group">
       <div class="nav-group-title">업무</div>
@@ -321,8 +321,8 @@ tbody tr:hover { background:var(--surface2); }
           <div><span style="color:var(--text2);">기준 엑셀:</span> ipo공모주참여현황_20260320.xlsx</div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
-          <div style="text-align:center;"><div class="stat-label">단순수익률</div><div style="font-family:'JetBrains Mono';font-size:18px;font-weight:700;color:var(--green);" id="simpleReturnBB">-</div></div>
-          <div style="text-align:center;"><div class="stat-label">연환산수익률</div><div style="font-family:'JetBrains Mono';font-size:18px;font-weight:700;color:var(--accent2);" id="annualReturnBB">-</div></div>
+          <div style="text-align:center;"><div class="stat-label">단순수익률</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:18px;font-weight:700;color:var(--green);" id="simpleReturnBB">-</div></div>
+          <div style="text-align:center;"><div class="stat-label">연환산수익률</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:18px;font-weight:700;color:var(--accent2);" id="annualReturnBB">-</div></div>
         </div>
       </div>
       <div class="checklist-section" style="border-left:3px solid #a78bfa;">
@@ -336,8 +336,8 @@ tbody tr:hover { background:var(--surface2); }
           <div><span style="color:var(--text2);">기준 엑셀:</span> ipo공모주참여현황_20260320.xlsx</div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
-          <div style="text-align:center;"><div class="stat-label">단순수익률</div><div style="font-family:'JetBrains Mono';font-size:18px;font-weight:700;color:var(--green);" id="simpleReturnMK">-</div></div>
-          <div style="text-align:center;"><div class="stat-label">연환산수익률</div><div style="font-family:'JetBrains Mono';font-size:18px;font-weight:700;color:var(--accent2);" id="annualReturnMK">-</div></div>
+          <div style="text-align:center;"><div class="stat-label">단순수익률</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:18px;font-weight:700;color:var(--green);" id="simpleReturnMK">-</div></div>
+          <div style="text-align:center;"><div class="stat-label">연환산수익률</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:18px;font-weight:700;color:var(--accent2);" id="annualReturnMK">-</div></div>
         </div>
       </div>
     </div>
@@ -547,10 +547,10 @@ function renderHolding() {
         ${d.name} <span class="tag tag-yellow">${d.lockup}</span>
       </div>
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px;">
-        <div><div class="stat-label">공모단가</div><div style="font-family:'JetBrains Mono';font-size:15px;font-weight:700;">${fmt(d.price)}원</div></div>
-        <div><div class="stat-label">보유수량</div><div style="font-family:'JetBrains Mono';font-size:15px;font-weight:700;">${fmt(d.holding)}주</div></div>
-        <div><div class="stat-label">현재종가</div><div style="font-family:'JetBrains Mono';font-size:15px;font-weight:700;">${fmt(d.closePrice)}원</div></div>
-        <div><div class="stat-label">평가손익</div><div style="font-family:'JetBrains Mono';font-size:15px;font-weight:700;color:var(--green);">+${fmt(d.unrealized)}원</div></div>
+        <div><div class="stat-label">공모단가</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:700;">${fmt(d.price)}원</div></div>
+        <div><div class="stat-label">보유수량</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:700;">${fmt(d.holding)}주</div></div>
+        <div><div class="stat-label">현재종가</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:700;">${fmt(d.closePrice)}원</div></div>
+        <div><div class="stat-label">평가손익</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:700;color:var(--green);">+${fmt(d.unrealized)}원</div></div>
       </div>
       <div style="margin-top:12px;font-size:12px;color:var(--text2);">배정금액: ${fmt(d.alloc)}원 | 매매가능일: ${d.tradeable} | 수익률: ${d.returnRate}</div>
     </div>`;
