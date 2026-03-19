@@ -742,12 +742,12 @@ const DATA = [
     "listing": "2025-12-24",
     "lockup": "1개월",
     "tradeable": "2026-01-29",
-    "holding": 843,
-    "realized": null,
-    "unrealized": 6322500,
-    "totalPnl": 6322500,
+    "holding": 743,
+    "realized": 700000,
+    "unrealized": 5572500,
+    "totalPnl": 6272500,
     "closePrice": 31500,
-    "returnRate": "24.20%"
+    "returnRate": "31.00%"
   },
   {
     "seq": 17,
@@ -1418,7 +1418,7 @@ function sendTeamMail(source) {
   window.open(mailto);
 }
 
-const LAST_UPDATE = '2026-03-19 17:30';
+const LAST_UPDATE = '2026-03-19 17:31';
 const PRICE_UPDATE = '2026-03-19 15:17';  // 종가 다운로드 반영 시점 (빈값=미반영)
 const SHEETS_URL = 'https://docs.google.com/spreadsheets/d/1_QEDbped1355C1uUZVwjQqKAF_-bGpfWO1YIg6hDTfs/edit';
 const GITHUB_LAST_COMMIT = '2026-03-19 15:17 | Naver closing price update 2026-03-19 15:17';
@@ -1563,6 +1563,8 @@ const CAL_EVENTS = [
   {date:'2026-04-09',ilim:'블랙보드일임',title:'[블랙보드일임/청약] (테스트)알비더블유 주금납입',type:'yellow',desc:'이체금액 509,040원'},
   {date:'2026-04-15',ilim:'블랙보드일임',title:'[블랙보드일임/상장및매도가능일] (테스트)코스모화학',type:'blue',desc:'공모가 12,000원 / 40주 / 미확약'},
   {date:'2026-04-16',ilim:'블랙보드일임',title:'[블랙보드일임/상장및매도가능일] (테스트)알비더블유',type:'blue',desc:'공모가 42,000원 / 12주 / 미확약'},
+  {date:'2026-03-19',ilim:'블랙보드일임',title:'[블랙보드일임/매도완료] 세미파이브',type:'blue',desc:'1차 매도: 100주 / 잔여: 743주 | 매도단가: 31,000원 | 실현손익: +700,000원'},
+  {date:'2026-03-23',ilim:'블랙보드일임',title:'[블랙보드일임/수도결제] 세미파이브',type:'orange',desc:'수도결제일 (매도일 2026-03-19 T+2) | 1차 매도: 100주 / 매도단가: 31,000원'},
 ];
 
 // 페이지별 일임 필터 상태
