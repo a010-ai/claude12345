@@ -359,32 +359,32 @@ tbody tr:hover { background:var(--surface2); }
     <!-- 시스템 상태 -->
     <div id="page-status" class="page">
       <div class="page-header"><h2>시스템 상태</h2><p>텔레그램 봇 / 엑셀 / 대시보드 / GitHub 연동 상태</p></div>
-      <div class="checklist-section" style="max-width:600px;">
+      <div class="checklist-section" style="max-width:900px;">
         <div class="checklist-title">데이터 상태</div>
-        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;table-layout:auto;">
           <tr style="border-bottom:1px solid var(--border);">
-            <td style="padding:12px 8px;color:var(--text2);width:180px;">📊 대시보드 최종 업데이트</td>
-            <td style="padding:12px 8px;font-weight:500;" id="statusLastUpdate">-</td>
+            <td style="padding:12px 8px;color:var(--text2);white-space:nowrap;min-width:200px;">📊 대시보드 최종 업데이트</td>
+            <td style="padding:12px 8px;font-weight:500;word-break:break-all;" id="statusLastUpdate">-</td>
           </tr>
           <tr style="border-bottom:1px solid var(--border);">
-            <td style="padding:12px 8px;color:var(--text2);">💹 종가 반영 시점</td>
-            <td style="padding:12px 8px;font-weight:500;" id="statusPriceUpdate">-</td>
+            <td style="padding:12px 8px;color:var(--text2);white-space:nowrap;">💹 종가 반영 시점</td>
+            <td style="padding:12px 8px;font-weight:500;word-break:break-all;" id="statusPriceUpdate">-</td>
           </tr>
           <tr style="border-bottom:1px solid var(--border);">
-            <td style="padding:12px 8px;color:var(--text2);">📁 최신 엑셀 파일</td>
-            <td style="padding:12px 8px;font-weight:500;" id="statusExcel">-</td>
+            <td style="padding:12px 8px;color:var(--text2);white-space:nowrap;">📁 최신 엑셀 파일</td>
+            <td style="padding:12px 8px;font-weight:500;word-break:break-all;" id="statusExcel">-</td>
           </tr>
           <tr style="border-bottom:1px solid var(--border);">
-            <td style="padding:12px 8px;color:var(--text2);">🔀 GitHub 최신 커밋</td>
-            <td style="padding:12px 8px;font-weight:500;" id="statusGithub">-</td>
+            <td style="padding:12px 8px;color:var(--text2);white-space:nowrap;">🔀 GitHub 최신 커밋</td>
+            <td style="padding:12px 8px;font-weight:500;word-break:break-all;" id="statusGithub">-</td>
           </tr>
           <tr>
-            <td style="padding:12px 8px;color:var(--text2);">🤖 텔레그램 봇 마지막 시작</td>
-            <td style="padding:12px 8px;font-weight:500;" id="statusBotStart">-</td>
+            <td style="padding:12px 8px;color:var(--text2);white-space:nowrap;">🤖 텔레그램 봇 마지막 시작</td>
+            <td style="padding:12px 8px;font-weight:500;word-break:break-all;" id="statusBotStart">-</td>
           </tr>
         </table>
       </div>
-      <div class="checklist-section" style="max-width:600px;margin-top:16px;">
+      <div class="checklist-section" style="max-width:900px;margin-top:16px;">
         <div class="checklist-title">연동 링크</div>
         <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;">
           <a href="https://claude12345-jlsm.vercel.app/" target="_blank" style="color:var(--accent2);text-decoration:none;">🌐 Vercel 대시보드</a>
