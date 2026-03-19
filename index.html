@@ -83,7 +83,7 @@ body { font-family:'Noto Sans KR',sans-serif; background:var(--bg); color:var(--
 .table-wrap { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
 .table-toolbar { display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border); }
 .table-toolbar h3 { font-size:14px; font-weight:700; }
-.filter-tabs { display:flex; gap:6px; }
+.filter-tabs { display:flex; gap:6px; flex-wrap:wrap; }
 .filter-tab { padding:6px 14px; border-radius:6px; font-size:12px; cursor:pointer; background:var(--surface2); color:var(--text2); border:1px solid var(--border); transition:all 0.2s; }
 .filter-tab.active, .filter-tab:hover { background:var(--blue-bg); color:var(--accent2); border-color:var(--accent); }
 table { width:100%; border-collapse:collapse; font-size:12px; }
@@ -283,8 +283,12 @@ tbody tr:hover { background:var(--surface2); }
             <span style="color:var(--border);font-size:11px;">|</span>
             <div class="filter-tabs">
               <div class="filter-tab active" onclick="filterTable('all',this)">전체</div>
+              <div class="filter-tab" onclick="filterTable('waiting',this)">상장대기</div>
+              <div class="filter-tab" onclick="filterTable('listing-today',this)">상장일</div>
+              <div class="filter-tab" onclick="filterTable('lockup',this)">락업중</div>
+              <div class="filter-tab" onclick="filterTable('sellable',this)">매도가능</div>
+              <div class="filter-tab" onclick="filterTable('holding',this)">보유중 전체</div>
               <div class="filter-tab" onclick="filterTable('completed',this)">완료</div>
-              <div class="filter-tab" onclick="filterTable('holding',this)">보유중</div>
             </div>
           </div>
         </div>
@@ -1417,7 +1421,7 @@ function sendTeamMail(source) {
   window.open(mailto);
 }
 
-const LAST_UPDATE = '2026-03-19 17:09';
+const LAST_UPDATE = '2026-03-19 17:14';
 const PRICE_UPDATE = '2026-03-19 15:17';  // 종가 다운로드 반영 시점 (빈값=미반영)
 const SHEETS_URL = 'https://docs.google.com/spreadsheets/d/1_QEDbped1355C1uUZVwjQqKAF_-bGpfWO1YIg6hDTfs/edit';
 const GITHUB_LAST_COMMIT = '2026-03-19 15:17 | Naver closing price update 2026-03-19 15:17';
@@ -1486,6 +1490,10 @@ function filterTable(f, el) {
     const st = tr.dataset.status;
     if(f==='completed') tr.style.display = st==='completed' ? '' : 'none';
     else if(f==='holding') tr.style.display = (st==='lockup'||st==='sellable') ? '' : 'none';
+    else if(f==='lockup') tr.style.display = st==='lockup' ? '' : 'none';
+    else if(f==='sellable') tr.style.display = st==='sellable' ? '' : 'none';
+    else if(f==='waiting') tr.style.display = st==='waiting' ? '' : 'none';
+    else if(f==='listing-today') tr.style.display = st==='listing-today' ? '' : 'none';
   });
 }
 
