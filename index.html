@@ -97,6 +97,7 @@ tbody tr:hover { background:var(--surface2); }
 .status-completed { background:var(--green-bg); color:var(--green); }
 .status-holding { background:var(--yellow-bg); color:var(--yellow); }
 .status-waiting { background:var(--blue-bg); color:var(--accent2); }
+.status-partial { background:var(--orange-bg); color:var(--orange); }
 .table-scroll { max-height:520px; overflow-y:auto; }
 /* 전체 페이지 스크롤바 */
 ::-webkit-scrollbar { width:10px; height:10px; }
@@ -213,6 +214,10 @@ tbody tr:hover { background:var(--surface2); }
       <div class="nav-item" onclick="showPage('holding',this)">
         <span class="nav-icon">&#128176;</span> 보유 종목
       </div>
+      <div class="nav-item" onclick="showPage('partial',this)">
+        <span class="nav-icon">&#128661;</span> 일부매도 종목
+        <span class="nav-badge" id="partialBadge" style="display:none;background:var(--orange);">0</span>
+      </div>
       <div class="nav-item" onclick="showPage('completed',this)">
         <span class="nav-icon">&#9989;</span> 완료 종목
       </div>
@@ -306,17 +311,32 @@ tbody tr:hover { background:var(--surface2); }
       <div id="holdingArea"></div>
     </div>
 
+    <!-- 일부매도 종목 -->
+    <div id="page-partial" class="page">
+      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
+        <div><h2>일부매도 종목</h2><p>일부 수량만 매도된 종목 — 전량 매도 완료 시 완료 종목으로 이동</p></div>
+        <div id="partialIlimToggles" style="display:flex;gap:6px;"></div>
+      </div>
+      <div class="stats-row" style="grid-template-columns:repeat(4,1fr);">
+        <div class="stat-card"><div class="stat-label">일부매도 종목수</div><div class="stat-value" style="color:var(--orange);" id="partialCount">0</div></div>
+        <div class="stat-card"><div class="stat-label">잔여수량 합계</div><div class="stat-value" style="color:var(--yellow);" id="partialHoldingTotal">-</div></div>
+        <div class="stat-card"><div class="stat-label">실현손익 합계</div><div class="stat-value green" id="partialRealizedTotal">-</div></div>
+        <div class="stat-card"><div class="stat-label">평가손익 합계</div><div class="stat-value yellow" id="partialUnrealizedTotal">-</div></div>
+      </div>
+      <div id="partialArea"></div>
+    </div>
+
     <!-- 완료 종목 -->
     <div id="page-completed" class="page">
       <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
-        <div><h2>완료 종목</h2><p>매도 완료된 종목</p></div>
+        <div><h2>완료 종목</h2><p>전량 매도 완료된 종목</p></div>
         <div id="compIlimToggles" style="display:flex;gap:6px;"></div>
       </div>
       <div class="table-wrap">
         <div class="table-toolbar"><h3>완료 종목 (<span id="compCount">0</span>)</h3></div>
         <div class="table-scroll">
           <table><thead><tr>
-            <th>순번</th><th>일임</th><th>종목명</th><th>공모단가</th><th>배정금액</th><th>실현손익</th><th>수익률</th>
+            <th>순번</th><th>일임</th><th>종목명</th><th>공모단가</th><th>배정금액</th><th>매도내역</th><th>실현손익</th><th>수익률</th>
           </tr></thead><tbody id="compBody"></tbody></table>
         </div>
       </div>
@@ -743,11 +763,11 @@ const DATA = [
     "lockup": "1개월",
     "tradeable": "2026-01-29",
     "holding": 743,
-    "realized": 700000,
+    "realized": 670000,
     "unrealized": 5572500,
-    "totalPnl": 6272500,
+    "totalPnl": 6242500,
     "closePrice": 31500,
-    "returnRate": "31.00%"
+    "returnRate": "30.86%"
   },
   {
     "seq": 17,
@@ -1418,7 +1438,7 @@ function sendTeamMail(source) {
   window.open(mailto);
 }
 
-const LAST_UPDATE = '2026-03-19 17:31';
+const LAST_UPDATE = '2026-03-19 19:00';
 const PRICE_UPDATE = '2026-03-19 15:17';  // 종가 다운로드 반영 시점 (빈값=미반영)
 const SHEETS_URL = 'https://docs.google.com/spreadsheets/d/1_QEDbped1355C1uUZVwjQqKAF_-bGpfWO1YIg6hDTfs/edit';
 const GITHUB_LAST_COMMIT = '2026-03-19 15:17 | Naver closing price update 2026-03-19 15:17';
@@ -1502,9 +1522,14 @@ function applyStatusFilter() {
   if(activeEl) { document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active')); activeEl.classList.add('active'); }
 }
 
+function getSellEvents(name) {
+  return CAL_EVENTS.filter(e => e.title.includes('매도완료') && e.title.includes(name));
+}
+
 function renderHolding() {
   const area = document.getElementById('holdingArea');
-  const holding = getFilteredData('holding').filter(d => d.holding);
+  // 일부매도 종목(realized 있는 holding)은 제외 — 순수 보유만 표시
+  const holding = getFilteredData('holding').filter(d => d.holding && !d.realized);
   if(!holding.length) { area.innerHTML = '<div class="checklist-section"><div class="checklist-title">현재 보유 중인 종목이 없습니다</div></div>'; return; }
   area.innerHTML = holding.map(d => {
     const color = ILIM_COLORS[d.ilim] || '#60a5fa';
@@ -1526,14 +1551,72 @@ function renderHolding() {
   }).join('');
 }
 
+function renderPartial() {
+  const area = document.getElementById('partialArea');
+  const partial = getFilteredData('partial').filter(d => d.holding && d.realized);
+  const cnt = partial.length;
+  document.getElementById('partialCount').textContent = cnt;
+  const badge = document.getElementById('partialBadge');
+  if(cnt > 0) { badge.style.display=''; badge.textContent = cnt; } else { badge.style.display='none'; }
+  // stats
+  const holdingTotal = partial.reduce((s,d) => s+(d.holding||0), 0);
+  const realTotal = partial.reduce((s,d) => s+(d.realized||0), 0);
+  const unrealTotal = partial.reduce((s,d) => s+(d.unrealized||0), 0);
+  document.getElementById('partialHoldingTotal').textContent = fmt(holdingTotal) + '주';
+  document.getElementById('partialRealizedTotal').textContent = (realTotal>=0?'+':'') + fmt(realTotal) + '원';
+  document.getElementById('partialUnrealizedTotal').textContent = (unrealTotal>=0?'+':'') + fmt(unrealTotal) + '원';
+  if(!cnt) { area.innerHTML = '<div class="checklist-section"><div class="checklist-title">일부매도 종목이 없습니다</div></div>'; return; }
+  area.innerHTML = partial.map(d => {
+    const color = ILIM_COLORS[d.ilim] || '#60a5fa';
+    const ilimShort = (d.ilim||'').replace('일임','');
+    const soldQty = (d.qty||0) - (d.holding||0);
+    const sellEvents = getSellEvents(d.name);
+    return `
+    <div class="checklist-section" style="border-left:3px solid ${color};margin-bottom:12px;">
+      <div class="checklist-title">
+        <span style="background:${color}22;color:${color};font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;">${ilimShort}</span>
+        ${d.name}
+        <span class="tag tag-orange">일부매도</span>
+        <span class="tag tag-yellow">${d.lockup}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px;padding-bottom:14px;border-bottom:1px solid var(--border);">
+        <div><div class="stat-label">배정수량</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:700;">${fmt(d.qty)}주</div></div>
+        <div><div class="stat-label">매도수량</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:700;color:var(--orange);">${fmt(soldQty)}주</div></div>
+        <div><div class="stat-label">잔여수량</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:700;color:var(--yellow);">${fmt(d.holding)}주</div></div>
+        <div><div class="stat-label">실현손익 (매도분)</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:700;color:var(--green);">+${fmt(d.realized)}원</div></div>
+        <div><div class="stat-label">평가손익 (잔여분)</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:700;color:${(d.unrealized||0)>=0?'var(--green)':'var(--red)'};">${(d.unrealized||0)>=0?'+':''}${fmt(d.unrealized)}원</div></div>
+        <div><div class="stat-label">전일종가</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:700;">${d.closePrice?fmt(d.closePrice)+'원':'-'}</div></div>
+      </div>
+      ${sellEvents.length ? `
+      <div style="margin-top:12px;">
+        <div class="ilim-section-title">매도 내역</div>
+        <table class="ilim-mini-table" style="margin-top:6px;">
+          <tr><th style="min-width:90px;">매도일자</th><th>내용</th></tr>
+          ${sellEvents.map(e => `<tr><td>${e.date}</td><td style="color:var(--text2);white-space:normal;line-height:1.6;">${e.desc}</td></tr>`).join('')}
+        </table>
+      </div>` : ''}
+      <div style="margin-top:10px;font-size:12px;color:var(--text2);">공모단가: ${fmt(d.price)}원 | 배정금액: ${fmt(d.alloc)}원 | 매매가능일: ${d.tradeable}</div>
+    </div>`;
+  }).join('');
+}
+
 function renderCompleted() {
   const comp = getFilteredData('completed').filter(d => !d.holding && d.realized);
   document.getElementById('compCount').textContent = comp.length;
   document.getElementById('compBody').innerHTML = comp.map(d => {
     const ilimShort = (d.ilim||'').replace('일임','');
+    const sellEvents = getSellEvents(d.name);
+    let sellInfo = '-';
+    if(sellEvents.length) {
+      sellInfo = sellEvents.map(e => `<span style="display:block;white-space:normal;line-height:1.6;">${e.date}: ${e.desc}</span>`).join('');
+    } else if(d.closePrice) {
+      sellInfo = `<span style="color:var(--text2);">매도가 ${fmt(d.closePrice)}원</span>`;
+    }
     return `<tr>
     <td>${d.seq}</td><td><span class="tag tag-blue" style="font-size:9px;">${ilimShort}</span></td><td>${d.name}</td><td class="num">${fmt(d.price)}</td>
-    <td class="num">${fmt(d.alloc)}</td><td class="num pnl-pos">${fmt(d.realized)}</td>
+    <td class="num">${fmt(d.alloc)}</td>
+    <td style="font-size:11px;color:var(--text2);max-width:260px;">${sellInfo}</td>
+    <td class="num pnl-pos">${fmt(d.realized)}</td>
     <td class="num">${d.returnRate}</td>
   </tr>`;
   }).join('');
@@ -1563,12 +1646,12 @@ const CAL_EVENTS = [
   {date:'2026-04-09',ilim:'블랙보드일임',title:'[블랙보드일임/청약] (테스트)알비더블유 주금납입',type:'yellow',desc:'이체금액 509,040원'},
   {date:'2026-04-15',ilim:'블랙보드일임',title:'[블랙보드일임/상장및매도가능일] (테스트)코스모화학',type:'blue',desc:'공모가 12,000원 / 40주 / 미확약'},
   {date:'2026-04-16',ilim:'블랙보드일임',title:'[블랙보드일임/상장및매도가능일] (테스트)알비더블유',type:'blue',desc:'공모가 42,000원 / 12주 / 미확약'},
-  {date:'2026-03-19',ilim:'블랙보드일임',title:'[블랙보드일임/매도완료] 세미파이브',type:'blue',desc:'1차 매도: 100주 / 잔여: 743주 | 매도단가: 31,000원 | 실현손익: +700,000원'},
-  {date:'2026-03-23',ilim:'블랙보드일임',title:'[블랙보드일임/수도결제] 세미파이브',type:'orange',desc:'수도결제일 (매도일 2026-03-19 T+2) | 1차 매도: 100주 / 매도단가: 31,000원'},
+  {date:'2026-03-19',ilim:'블랙보드일임',title:'[블랙보드일임/일부매도] 세미파이브',type:'blue',desc:'1차 일부매도: 100주 / 잔여: 743주 | 매도단가: 31,000원 | 수수료및제세금: 30,000원 | 정산금액: 3,070,000원 | 실현손익: +670,000원'},
+  {date:'2026-03-23',ilim:'블랙보드일임',title:'[블랙보드일임/수도결제] 세미파이브',type:'orange',desc:'수도결제일 (매도일 2026-03-19 T+2) | 1차 일부매도: 100주 / 매도단가: 31,000원 / 정산금액: 3,070,000원'},
 ];
 
 // 페이지별 일임 필터 상태
-const ilimFilter = {cal:{},portfolio:{},holding:{},completed:{}};
+const ilimFilter = {cal:{},portfolio:{},holding:{},partial:{},completed:{}};
 const ALL_ILIMS = ['블랙보드일임','마크일임'];
 
 function initAllIlimToggles() {
@@ -1576,11 +1659,13 @@ function initAllIlimToggles() {
     ilimFilter.cal[il] = true;
     ilimFilter.portfolio[il] = true;
     ilimFilter.holding[il] = true;
+    ilimFilter.partial[il] = true;
     ilimFilter.completed[il] = true;
   });
   renderPageToggles('cal','ilimToggles');
   renderPageToggles('portfolio','portfolioIlimToggles');
   renderPageToggles('holding','holdingIlimToggles');
+  renderPageToggles('partial','partialIlimToggles');
   renderPageToggles('completed','compIlimToggles');
 }
 
@@ -1599,10 +1684,12 @@ function renderPageToggles(page, areaId) {
 
 function togglePageIlim(page, il) {
   ilimFilter[page][il] = !ilimFilter[page][il];
-  renderPageToggles(page, page==='cal'?'ilimToggles':page==='portfolio'?'portfolioIlimToggles':page==='holding'?'holdingIlimToggles':'compIlimToggles');
+  const areaMap = {cal:'ilimToggles',portfolio:'portfolioIlimToggles',holding:'holdingIlimToggles',partial:'partialIlimToggles',completed:'compIlimToggles'};
+  renderPageToggles(page, areaMap[page]);
   if(page==='cal') { renderCalGrid(); renderCalList(); }
   else if(page==='portfolio') { renderTable(); applyStatusFilter(); }
   else if(page==='holding') { renderHolding(); }
+  else if(page==='partial') { renderPartial(); }
   else if(page==='completed') { renderCompleted(); }
 }
 
@@ -1694,6 +1781,7 @@ renderChecklist();
 initAllIlimToggles();
 renderTable();
 renderHolding();
+renderPartial();
 renderCompleted();
 renderCalendar();
 renderPriceStatus();
