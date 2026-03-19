@@ -276,20 +276,17 @@ tbody tr:hover { background:var(--surface2); }
     <div id="page-portfolio" class="page">
       <div class="page-header"><h2>참여현황 전체</h2><p>블랙보드/마크 일임 공모주 참여현황 (Google Sheets 연동)</p></div>
       <div class="table-wrap">
-        <div class="table-toolbar">
-          <h3>전체 종목 (<span id="allCount">0</span>) <span style="font-size:11px;font-weight:400;color:var(--text2);margin-left:8px;">최종 업데이트: <span id="lastUpdate"></span></span></h3>
-          <div style="display:flex;align-items:center;gap:8px;">
+        <div class="table-toolbar" style="flex-direction:column;align-items:stretch;gap:10px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;">
+            <h3>전체 종목 (<span id="allCount">0</span>) <span style="font-size:11px;font-weight:400;color:var(--text2);margin-left:8px;">최종 업데이트: <span id="lastUpdate"></span></span></h3>
             <div id="portfolioIlimToggles" style="display:flex;gap:6px;"></div>
-            <span style="color:var(--border);font-size:11px;">|</span>
-            <div class="filter-tabs">
-              <div class="filter-tab active" onclick="filterTable('all',this)">전체</div>
-              <div class="filter-tab" onclick="filterTable('waiting',this)">상장대기</div>
-              <div class="filter-tab" onclick="filterTable('listing-today',this)">상장일</div>
-              <div class="filter-tab" onclick="filterTable('lockup',this)">락업중</div>
-              <div class="filter-tab" onclick="filterTable('sellable',this)">매도가능</div>
-              <div class="filter-tab" onclick="filterTable('holding',this)">보유중 전체</div>
-              <div class="filter-tab" onclick="filterTable('completed',this)">완료</div>
-            </div>
+          </div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;">
+            <div class="filter-tab active" id="stf-all" onclick="filterTable('all',this)">전체</div>
+            <div class="filter-tab" id="stf-waiting" onclick="filterTable('waiting',this)">상장대기</div>
+            <div class="filter-tab" id="stf-lockup" onclick="filterTable('lockup',this)">락업중</div>
+            <div class="filter-tab" id="stf-sellable" onclick="filterTable('sellable',this)">매도가능</div>
+            <div class="filter-tab" id="stf-completed" onclick="filterTable('completed',this)">완료</div>
           </div>
         </div>
         <div class="table-scroll">
@@ -1482,19 +1479,26 @@ function renderTable() {
   }).join('');
 }
 
+let portfolioStatusFilter = 'all';
 function filterTable(f, el) {
+  portfolioStatusFilter = f;
   document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
   el.classList.add('active');
+  applyStatusFilter();
+}
+function applyStatusFilter() {
+  const f = portfolioStatusFilter;
   document.querySelectorAll('#tableBody tr').forEach(tr => {
     if(f==='all') { tr.style.display=''; return; }
     const st = tr.dataset.status;
     if(f==='completed') tr.style.display = st==='completed' ? '' : 'none';
-    else if(f==='holding') tr.style.display = (st==='lockup'||st==='sellable') ? '' : 'none';
     else if(f==='lockup') tr.style.display = st==='lockup' ? '' : 'none';
     else if(f==='sellable') tr.style.display = st==='sellable' ? '' : 'none';
-    else if(f==='waiting') tr.style.display = st==='waiting' ? '' : 'none';
-    else if(f==='listing-today') tr.style.display = st==='listing-today' ? '' : 'none';
+    else if(f==='waiting') tr.style.display = (st==='waiting'||st==='listing-today') ? '' : 'none';
   });
+  // 활성 버튼 표시 유지
+  const activeEl = document.getElementById('stf-'+f);
+  if(activeEl) { document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active')); activeEl.classList.add('active'); }
 }
 
 function renderHolding() {
@@ -1594,7 +1598,7 @@ function togglePageIlim(page, il) {
   ilimFilter[page][il] = !ilimFilter[page][il];
   renderPageToggles(page, page==='cal'?'ilimToggles':page==='portfolio'?'portfolioIlimToggles':page==='holding'?'holdingIlimToggles':'compIlimToggles');
   if(page==='cal') { renderCalGrid(); renderCalList(); }
-  else if(page==='portfolio') { renderTable(); }
+  else if(page==='portfolio') { renderTable(); applyStatusFilter(); }
   else if(page==='holding') { renderHolding(); }
   else if(page==='completed') { renderCompleted(); }
 }
