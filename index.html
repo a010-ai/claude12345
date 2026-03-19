@@ -219,6 +219,9 @@ tbody tr:hover { background:var(--surface2); }
     </div>
     <div class="nav-group">
       <div class="nav-group-title">설정</div>
+      <div class="nav-item" onclick="showPage('status',this)">
+        <span class="nav-icon">&#128225;</span> 시스템 상태
+      </div>
       <div class="nav-item" onclick="showPage('info',this)">
         <span class="nav-icon">&#9881;</span> 일임계약 정보
       </div>
@@ -271,7 +274,7 @@ tbody tr:hover { background:var(--surface2); }
 
     <!-- 참여현황 전체 -->
     <div id="page-portfolio" class="page">
-      <div class="page-header"><h2>참여현황 전체</h2><p>블랙보드 일임 공모주 참여현황 (ipo공모주참여현황_v3.xlsx)</p></div>
+      <div class="page-header"><h2>참여현황 전체</h2><p>블랙보드 일임 공모주 참여현황 (ipo공모주참여현황_20260320.xlsx)</p></div>
       <div class="table-wrap">
         <div class="table-toolbar">
           <h3>전체 종목 (<span id="allCount">0</span>) <span style="font-size:11px;font-weight:400;color:var(--text2);margin-left:8px;">최종 업데이트: <span id="lastUpdate"></span></span></h3>
@@ -349,6 +352,43 @@ tbody tr:hover { background:var(--surface2); }
         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
           <div style="text-align:center;"><div class="stat-label">단순수익률</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:18px;font-weight:700;color:var(--green);" id="simpleReturnMK">-</div></div>
           <div style="text-align:center;"><div class="stat-label">연환산수익률</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:18px;font-weight:700;color:var(--accent2);" id="annualReturnMK">-</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 시스템 상태 -->
+    <div id="page-status" class="page">
+      <div class="page-header"><h2>시스템 상태</h2><p>텔레그램 봇 / 엑셀 / 대시보드 / GitHub 연동 상태</p></div>
+      <div class="checklist-section" style="max-width:600px;">
+        <div class="checklist-title">데이터 상태</div>
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:12px 8px;color:var(--text2);width:180px;">📊 대시보드 최종 업데이트</td>
+            <td style="padding:12px 8px;font-weight:500;" id="statusLastUpdate">-</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:12px 8px;color:var(--text2);">💹 종가 반영 시점</td>
+            <td style="padding:12px 8px;font-weight:500;" id="statusPriceUpdate">-</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:12px 8px;color:var(--text2);">📁 최신 엑셀 파일</td>
+            <td style="padding:12px 8px;font-weight:500;" id="statusExcel">-</td>
+          </tr>
+          <tr style="border-bottom:1px solid var(--border);">
+            <td style="padding:12px 8px;color:var(--text2);">🔀 GitHub 최신 커밋</td>
+            <td style="padding:12px 8px;font-weight:500;" id="statusGithub">-</td>
+          </tr>
+          <tr>
+            <td style="padding:12px 8px;color:var(--text2);">🤖 텔레그램 봇 마지막 시작</td>
+            <td style="padding:12px 8px;font-weight:500;" id="statusBotStart">-</td>
+          </tr>
+        </table>
+      </div>
+      <div class="checklist-section" style="max-width:600px;margin-top:16px;">
+        <div class="checklist-title">연동 링크</div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;">
+          <a href="https://claude12345-jlsm.vercel.app/" target="_blank" style="color:var(--accent2);text-decoration:none;">🌐 Vercel 대시보드</a>
+          <a href="https://github.com/a010-ai/claude12345" target="_blank" style="color:var(--accent2);text-decoration:none;">📦 GitHub 저장소</a>
         </div>
       </div>
     </div>
@@ -716,6 +756,17 @@ function sendTeamMail(source) {
 
 const LAST_UPDATE = '2026-03-19 14:18';
 const PRICE_UPDATE = '2026-03-19 01:19';  // 종가 다운로드 반영 시점 (빈값=미반영)
+const EXCEL_LATEST = 'ipo공모주참여현황_20260320.xlsx';
+const GITHUB_LAST_COMMIT = '2026-03-19 14:19 | Update dashboard: 한페스/메쥬 청약 추가 (20260319)';
+const BOT_LAST_START = '2026-03-19 14:38';
+
+function renderStatus() {
+  document.getElementById('statusLastUpdate').textContent = LAST_UPDATE || '-';
+  document.getElementById('statusPriceUpdate').textContent = PRICE_UPDATE || '미반영';
+  document.getElementById('statusExcel').textContent = EXCEL_LATEST || '-';
+  document.getElementById('statusGithub').textContent = GITHUB_LAST_COMMIT || '-';
+  document.getElementById('statusBotStart').textContent = BOT_LAST_START || '-';
+}
 
 function renderPriceStatus() {
   const statusEl = document.getElementById('priceUpdateStatus');
@@ -955,6 +1006,7 @@ renderHolding();
 renderCompleted();
 renderCalendar();
 renderPriceStatus();
+renderStatus();
 renderEmailList();
 // 일임별 수익률 계산
 function calcIlimReturn(ilimName, startDateStr, investAmt, elapsedId, simpleId, annualId) {
