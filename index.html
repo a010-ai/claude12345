@@ -455,8 +455,9 @@ function showPage(id, el) {
 function getStatus(d) {
   const ls = d.listing, ts = d.tradeable;
   if(d.holding) {
-    if(todayStr < ts) return 'lockup';
-    return 'sellable';
+    if(todayStr < ls) return 'waiting';   // 상장 전 → 상장대기
+    if(todayStr < ts) return 'lockup';    // 상장 후 매매가능일 전 → 락업중
+    return 'sellable';                    // 매매가능일 이후 → 매도가능
   }
   if(d.realized != null || d.totalPnl != null && !d.holding) return 'completed';
   if(todayStr < ls) return 'waiting';
@@ -755,7 +756,7 @@ function sendTeamMail(source) {
   window.open(mailto);
 }
 
-const LAST_UPDATE = '2026-03-19 16:31';
+const LAST_UPDATE = '2026-03-19 16:57';
 const PRICE_UPDATE = '2026-03-19 15:17';  // 종가 다운로드 반영 시점 (빈값=미반영)
 const SHEETS_URL = 'https://docs.google.com/spreadsheets/d/1_QEDbped1355C1uUZVwjQqKAF_-bGpfWO1YIg6hDTfs/edit';
 const GITHUB_LAST_COMMIT = '2026-03-19 15:17 | Naver closing price update 2026-03-19 15:17';
