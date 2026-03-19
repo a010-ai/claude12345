@@ -274,7 +274,7 @@ tbody tr:hover { background:var(--surface2); }
 
     <!-- 참여현황 전체 -->
     <div id="page-portfolio" class="page">
-      <div class="page-header"><h2>참여현황 전체</h2><p>블랙보드 일임 공모주 참여현황 (ipo공모주참여현황_20260320.xlsx)</p></div>
+      <div class="page-header"><h2>참여현황 전체</h2><p>블랙보드/마크 일임 공모주 참여현황 (Google Sheets 연동)</p></div>
       <div class="table-wrap">
         <div class="table-toolbar">
           <h3>전체 종목 (<span id="allCount">0</span>) <span style="font-size:11px;font-weight:400;color:var(--text2);margin-left:8px;">최종 업데이트: <span id="lastUpdate"></span></span></h3>
@@ -332,7 +332,7 @@ tbody tr:hover { background:var(--surface2); }
           <div><span style="color:var(--text2);">기표일자:</span> 2025-11-24</div>
           <div><span style="color:var(--text2);">투자원금:</span> 2,000,000,000원</div>
           <div><span style="color:var(--text2);">경과일수:</span> <span id="elapsedDaysBB"></span>일</div>
-          <div><span style="color:var(--text2);">기준 엑셀:</span> ipo공모주참여현황_20260320.xlsx</div>
+          <div><span style="color:var(--text2);">기준 스프레드시트:</span> <a href="https://docs.google.com/spreadsheets/d/1_QEDbped1355C1uUZVwjQqKAF_-bGpfWO1YIg6hDTfs/edit" target="_blank" style="color:var(--accent2);">Google Sheets &#x2197;</a></div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
           <div style="text-align:center;"><div class="stat-label">단순수익률</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:18px;font-weight:700;color:var(--green);" id="simpleReturnBB">-</div></div>
@@ -347,7 +347,7 @@ tbody tr:hover { background:var(--surface2); }
           <div><span style="color:var(--text2);">기표일자:</span> 2025-09-27</div>
           <div><span style="color:var(--text2);">투자원금:</span> 2,000,000,000원</div>
           <div><span style="color:var(--text2);">경과일수:</span> <span id="elapsedDaysMK"></span>일</div>
-          <div><span style="color:var(--text2);">기준 엑셀:</span> ipo공모주참여현황_20260320.xlsx</div>
+          <div><span style="color:var(--text2);">기준 스프레드시트:</span> <a href="https://docs.google.com/spreadsheets/d/1_QEDbped1355C1uUZVwjQqKAF_-bGpfWO1YIg6hDTfs/edit" target="_blank" style="color:var(--accent2);">Google Sheets &#x2197;</a></div>
         </div>
         <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
           <div style="text-align:center;"><div class="stat-label">단순수익률</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:18px;font-weight:700;color:var(--green);" id="simpleReturnMK">-</div></div>
@@ -371,7 +371,7 @@ tbody tr:hover { background:var(--surface2); }
             <td style="padding:12px 8px;font-weight:500;word-break:break-all;" id="statusPriceUpdate">-</td>
           </tr>
           <tr style="border-bottom:1px solid var(--border);">
-            <td style="padding:12px 8px;color:var(--text2);white-space:nowrap;">📁 최신 엑셀 파일</td>
+            <td style="padding:12px 8px;color:var(--text2);white-space:nowrap;">📊 기준 스프레드시트</td>
             <td style="padding:12px 8px;font-weight:500;word-break:break-all;" id="statusExcel">-</td>
           </tr>
           <tr style="border-bottom:1px solid var(--border);">
@@ -389,6 +389,7 @@ tbody tr:hover { background:var(--surface2); }
         <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;">
           <a href="https://claude12345-jlsm.vercel.app/" target="_blank" style="color:var(--accent2);text-decoration:none;">🌐 Vercel 대시보드</a>
           <a href="https://github.com/a010-ai/claude12345" target="_blank" style="color:var(--accent2);text-decoration:none;">📦 GitHub 저장소</a>
+          <a href="https://docs.google.com/spreadsheets/d/1_QEDbped1355C1uUZVwjQqKAF_-bGpfWO1YIg6hDTfs/edit" target="_blank" style="color:var(--accent2);text-decoration:none;">📊 기준 스프레드시트 (Google Sheets)</a>
         </div>
       </div>
     </div>
@@ -756,14 +757,19 @@ function sendTeamMail(source) {
 
 const LAST_UPDATE = '2026-03-19 15:17';
 const PRICE_UPDATE = '2026-03-19 15:17';  // 종가 다운로드 반영 시점 (빈값=미반영)
-const EXCEL_LATEST = 'ipo공모주참여현황_20260320.xlsx';
+const SHEETS_URL = 'https://docs.google.com/spreadsheets/d/1_QEDbped1355C1uUZVwjQqKAF_-bGpfWO1YIg6hDTfs/edit';
 const GITHUB_LAST_COMMIT = '2026-03-19 15:17 | Naver closing price update 2026-03-19 15:17';
 const BOT_LAST_START = '2026-03-19 14:38';
 
 function renderStatus() {
   document.getElementById('statusLastUpdate').textContent = LAST_UPDATE || '-';
   document.getElementById('statusPriceUpdate').textContent = PRICE_UPDATE || '미반영';
-  document.getElementById('statusExcel').textContent = EXCEL_LATEST || '-';
+  const sheetsEl = document.getElementById('statusExcel');
+  if(SHEETS_URL) {
+    sheetsEl.innerHTML = '<a href="' + SHEETS_URL + '" target="_blank" style="color:var(--accent2);">Google Sheets 열기 &#x2197;</a>';
+  } else {
+    sheetsEl.textContent = '-';
+  }
   document.getElementById('statusGithub').textContent = GITHUB_LAST_COMMIT || '-';
   document.getElementById('statusBotStart').textContent = BOT_LAST_START || '-';
 }
