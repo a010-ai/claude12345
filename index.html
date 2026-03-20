@@ -1458,10 +1458,21 @@ function buildMailContent(source) {
     subject = `[IPO공모주] ${calYear}년 ${calMonth+1}월 캘린더 일정`;
     body = `IPO 공모주 캘린더 일정 (${calYear}년 ${calMonth+1}월)\n\n`;
     if(monthEvts.length) {
+      const byDate = {};
       monthEvts.forEach(e => {
-        const d = new Date(e.date);
+        if(!byDate[e.date]) byDate[e.date] = [];
+        byDate[e.date].push(e);
+      });
+      Object.keys(byDate).sort().forEach(date => {
+        const d = new Date(date);
         const dow = ['일','월','화','수','목','금','토'][d.getDay()];
-        body += `${e.date}(${dow}) ${e.title}\n  ${e.desc}\n\n`;
+        body += `■ ${date}(${dow})\n`;
+        byDate[date].forEach(e => {
+          const ilimTag = e.ilim ? `[${e.ilim.replace('일임','')}] ` : '';
+          const cleanTitle = e.title.replace(/\[.*?\]\s*/, '');
+          body += `  - ${ilimTag}${cleanTitle} | ${e.desc}\n`;
+        });
+        body += '\n';
       });
     } else { body += '등록된 일정이 없습니다.\n'; }
   }
