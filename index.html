@@ -1825,8 +1825,9 @@ function renderCalGrid() {
     html += `<div class="cal-day ${isToday?'today':''}">`;
     html += `<div class="cal-day-num">${d}</div>`;
     evts.forEach(e => {
+      const ilimShort = e.ilim ? '[' + e.ilim.replace('일임','') + '] ' : '';
       const short = e.title.replace(/\[.*?\//, '').replace(']','').trim();
-      html += `<span class="cal-dot ${e.type}" title="${e.title}">${short}</span>`;
+      html += `<span class="cal-dot ${e.type}" title="${e.title}">${ilimShort}${short}</span>`;
     });
     html += '</div>';
   }
@@ -1854,9 +1855,11 @@ function renderCalList() {
     const d = new Date(e.date);
     const dow = ['일','월','화','수','목','금','토'][d.getDay()];
     const day = `${d.getMonth()+1}/${String(d.getDate()).padStart(2,'0')}(${dow})`;
+    const ilimTag = e.ilim ? `<span style="font-size:11px;font-weight:700;color:var(--accent2);margin-right:6px;">[${e.ilim.replace('일임','')}]</span>` : '';
+    const cleanTitle = e.title.replace(/\[.*?\]\s*/, '');
     return `<div class="cal-event ${e.type}">
       <div class="cal-date">${day}</div>
-      <div><div class="cal-title">${e.title}</div><div class="cal-desc">${e.desc}</div></div>
+      <div><div class="cal-title">${ilimTag}${cleanTitle}</div><div class="cal-desc">${e.desc}</div></div>
     </div>`;
   }).join('');
 }
