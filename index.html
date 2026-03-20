@@ -1485,8 +1485,9 @@ function renderTable() {
     const unrealClass = (d.unrealized||0) >= 0 ? 'pnl-pos' : 'pnl-neg';
     const totalClass = (d.totalPnl||0) >= 0 ? 'pnl-pos' : 'pnl-neg';
     const ilimShort = (d.ilim||'').replace('일임','');
+    const ilimColor = ILIM_COLORS[d.ilim] || '#60a5fa';
     return `<tr data-status="${st}">
-      <td>${d.seq}</td><td><span class="tag tag-blue" style="font-size:9px;">${ilimShort}</span></td><td>${d.name}</td><td>${d.broker}</td>
+      <td>${d.seq}</td><td><span class="tag" style="font-size:9px;background:${ilimColor}22;color:${ilimColor};">${ilimShort}</span></td><td>${d.name}</td><td>${d.broker}</td>
       <td class="num">${fmt(d.price)}</td><td class="num">${fmt(d.qty)}</td>
       <td class="num">${fmt(d.alloc)}</td><td class="num">${fmt(d.total)}</td>
       <td>${d.listing}</td><td>${d.lockup}</td><td class="num">${d.holding||'-'}</td>
@@ -1612,8 +1613,9 @@ function renderCompleted() {
     } else if(d.closePrice) {
       sellInfo = `<span style="color:var(--text2);">매도가 ${fmt(d.closePrice)}원</span>`;
     }
+    const ilimColor = ILIM_COLORS[d.ilim] || '#60a5fa';
     return `<tr>
-    <td>${d.seq}</td><td><span class="tag tag-blue" style="font-size:9px;">${ilimShort}</span></td><td>${d.name}</td><td class="num">${fmt(d.price)}</td>
+    <td>${d.seq}</td><td><span class="tag" style="font-size:9px;background:${ilimColor}22;color:${ilimColor};">${ilimShort}</span></td><td>${d.name}</td><td class="num">${fmt(d.price)}</td>
     <td class="num">${fmt(d.alloc)}</td>
     <td style="font-size:11px;color:var(--text2);max-width:260px;">${sellInfo}</td>
     <td class="num pnl-pos">${fmt(d.realized)}</td>
