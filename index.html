@@ -212,6 +212,10 @@ tbody tr:hover { background:var(--surface2); }
       <div class="nav-item" onclick="showPage('portfolio',this)">
         <span class="nav-icon">&#128200;</span> 참여현황 전체
       </div>
+      <div class="nav-item" onclick="showPage('waiting',this)">
+        <span class="nav-icon">&#9203;</span> 상장대기 종목
+        <span class="nav-badge" id="waitingBadge" style="display:none;background:var(--accent);">0</span>
+      </div>
       <div class="nav-item" onclick="showPage('holding',this)">
         <span class="nav-icon">&#128176;</span> 보유 종목
       </div>
@@ -308,6 +312,20 @@ tbody tr:hover { background:var(--surface2); }
           </tr></thead><tbody id="tableBody"></tbody></table>
         </div>
       </div>
+    </div>
+
+    <!-- 상장대기 종목 -->
+    <div id="page-waiting" class="page">
+      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
+        <div><h2>상장대기 종목</h2><p>상장일 종목 및 상장 대기 중인 종목</p></div>
+        <div id="waitingIlimToggles" style="display:flex;gap:6px;"></div>
+      </div>
+      <div class="stats-row" style="grid-template-columns:repeat(3,1fr);">
+        <div class="stat-card"><div class="stat-label">상장대기 종목수</div><div class="stat-value" style="color:var(--accent2);" id="waitingCount">0</div></div>
+        <div class="stat-card"><div class="stat-label">상장일 종목</div><div class="stat-value" style="color:var(--orange);" id="waitingListingTodayCount">0</div></div>
+        <div class="stat-card"><div class="stat-label">배정금액 합계</div><div class="stat-value blue" id="waitingAllocTotal">-</div></div>
+      </div>
+      <div id="waitingArea"></div>
     </div>
 
     <!-- 보유 종목 -->
@@ -1242,16 +1260,17 @@ function buildTaskList() {
       const isSellable = todayStr >= d.tradeable;
 
       if(isListingToday && d.listing === d.tradeable) {
-        // Case 3.1: 상장일 당일 (락업 없음) = 상장+매도 동시
+        // Case 3.1: 상장 및 매도가능일 — 상장처리 필수 + 매도 조건부
         const items = [
-          {suffix:'1',text:'운용사 매도완료 보고 확인',detail:''},
-          {suffix:'2',text:'외부망 - 운용사 매도거래내역 엑셀 확인',detail:''},
-          {suffix:'3',text:'외부망 - 증권사 거래내역 파일 확인',detail:''},
-          {suffix:'4',text:'자산운용시스템: 상장 처리 → 매도 처리',detail:'일부/전량 확인 필수'},
-          {suffix:'5',text:'카카오톡 매도 보고 - 단톡방 전송',detail:''},
+          {suffix:'1',text:'외부망 - 증권사 거래내역 파일 확인 (필수)',detail:'상장 처리를 위한 필수 확인'},
+          {suffix:'2',text:'자산운용시스템 - 주식 거래: 주식 매입(상장) 처리 (필수)',detail:'상장 처리 필수업무'},
+          {suffix:'3',text:'운용사 매도 여부 확인',detail:'매도 안 할 수도 / 일부만 할 수도 / 전량 할 수도 있음'},
+          {suffix:'4',text:'(매도 시) 외부망 - 운용사 매도거래내역 엑셀 확인',detail:''},
+          {suffix:'5',text:'(매도 시) 자산운용시스템 - 주식 거래 > 매도거래 입력',detail:'일부/전량 확인 필수'},
+          {suffix:'6',text:'(매도 시) 카카오톡 매도 보고 - 단톡방 전송',detail:''},
         ];
         items.forEach(it => {
-          tasks.push({id:`${d.name}_listingsell_${it.suffix}`,ilim,name:d.name,label:`${d.name} - 상장 및 매도가능일 (상장+매도 동시)`,text:it.text,detail:it.detail});
+          tasks.push({id:`${d.name}_listingsell_${it.suffix}`,ilim,name:d.name,label:`${d.name} - 상장 및 매도가능일`,labelSub:'상장처리(1~2번) 필수 / 매도(3~6번)는 운용사 판단에 따라 조건부',text:it.text,detail:it.detail});
         });
       } else if(isListingToday && d.listing !== d.tradeable) {
         // Case 3.2: 상장일 당일 (락업 있음) = 상장만 처리
@@ -1260,11 +1279,11 @@ function buildTaskList() {
           {suffix:'2',text:'자산운용시스템 - 주식 거래: 주식 매입(상장) 처리',detail:''},
         ];
         items.forEach(it => {
-          tasks.push({id:`${d.name}_listing_${it.suffix}`,ilim,name:d.name,label:`${d.name} - 상장일 (락업 있음, 매매가능일: ${d.tradeable})`,text:it.text,detail:it.detail});
+          tasks.push({id:`${d.name}_listing_${it.suffix}`,ilim,name:d.name,label:`${d.name} - 상장일`,labelSub:`락업 있음 / 매매가능일: ${d.tradeable}`,text:it.text,detail:it.detail});
         });
       } else if(isLockup) {
         // Case 3.3: 락업 기간 중
-        tasks.push({id:`${d.name}_lockup_1`,ilim,name:d.name,label:`${d.name} - 락업 중 (매매가능일: ${d.tradeable})`,text:'오전 9시 기준가 입력',detail:`전일 종가로 자산운용시스템 단가관리 입력 필수 (현재종가: ${fmt(d.closePrice)}원)`});
+        tasks.push({id:`${d.name}_lockup_1`,ilim,name:d.name,label:`${d.name} - 락업 중`,labelSub:`매매가능일: ${d.tradeable}`,text:'오전 9시 기준가 입력',detail:`전일 종가로 자산운용시스템 단가관리 입력 필수 (현재종가: ${fmt(d.closePrice)}원)`});
       } else if(isSellable && !isListingToday) {
         // Case 3.4: 매매가능일 이후 미매도
         const items = [
@@ -1275,7 +1294,7 @@ function buildTaskList() {
           {suffix:'5',text:'(매도 시) 카카오톡 매도 보고 - 단톡방 전송',detail:''}
         ];
         items.forEach(it => {
-          tasks.push({id:`${d.name}_sell_${it.suffix}`,ilim,name:d.name,label:`${d.name} - 매도가능 (매매가능일 경과)`,text:it.text,detail:it.detail});
+          tasks.push({id:`${d.name}_sell_${it.suffix}`,ilim,name:d.name,label:`${d.name} - 매도가능일`,labelSub:'매매가능일 경과 - 매도 여부 확인 필요',text:it.text,detail:it.detail});
         });
       }
     });
@@ -1285,16 +1304,17 @@ function buildTaskList() {
   DATA.filter(d => !d.holding && !d.realized && todayStr === d.listing).forEach(d => {
     const ilim = d.ilim;
     if(d.listing === d.tradeable) {
-      // 상장+매도 동시 (holding이 아직 null인 상장대기 종목)
+      // 상장 및 매도가능일 (holding이 아직 null인 상장대기 종목) — 상장처리 필수 + 매도 조건부
       const items = [
-        {suffix:'1',text:'운용사 매도완료 보고 확인',detail:''},
-        {suffix:'2',text:'외부망 - 운용사 매도거래내역 엑셀 확인',detail:''},
-        {suffix:'3',text:'외부망 - 증권사 거래내역 파일 확인',detail:''},
-        {suffix:'4',text:'자산운용시스템: 상장 처리 → 매도 처리',detail:'일부/전량 확인 필수'},
-        {suffix:'5',text:'카카오톡 매도 보고 - 단톡방 전송',detail:''},
+        {suffix:'1',text:'외부망 - 증권사 거래내역 파일 확인 (필수)',detail:'상장 처리를 위한 필수 확인'},
+        {suffix:'2',text:'자산운용시스템 - 주식 거래: 주식 매입(상장) 처리 (필수)',detail:'상장 처리 필수업무'},
+        {suffix:'3',text:'운용사 매도 여부 확인',detail:'매도 안 할 수도 / 일부만 할 수도 / 전량 할 수도 있음'},
+        {suffix:'4',text:'(매도 시) 외부망 - 운용사 매도거래내역 엑셀 확인',detail:''},
+        {suffix:'5',text:'(매도 시) 자산운용시스템 - 주식 거래 > 매도거래 입력',detail:'일부/전량 확인 필수'},
+        {suffix:'6',text:'(매도 시) 카카오톡 매도 보고 - 단톡방 전송',detail:''},
       ];
       items.forEach(it => {
-        tasks.push({id:`${d.name}_listingsell_${it.suffix}`,ilim,name:d.name,label:`${d.name} - 상장 및 매도가능일 (상장+매도 동시)`,text:it.text,detail:it.detail});
+        tasks.push({id:`${d.name}_listingsell_${it.suffix}`,ilim,name:d.name,label:`${d.name} - 상장 및 매도가능일`,labelSub:'상장처리(1~2번) 필수 / 매도(3~6번)는 운용사 판단에 따라 조건부',text:it.text,detail:it.detail});
       });
     } else {
       // 상장일이지만 락업 있음
@@ -1303,7 +1323,7 @@ function buildTaskList() {
         {suffix:'2',text:'자산운용시스템 - 주식 거래: 주식 매입(상장) 처리',detail:''},
       ];
       items.forEach(it => {
-        tasks.push({id:`${d.name}_listing_${it.suffix}`,ilim,name:d.name,label:`${d.name} - 상장일 (락업 있음, 매매가능일: ${d.tradeable})`,text:it.text,detail:it.detail});
+        tasks.push({id:`${d.name}_listing_${it.suffix}`,ilim,name:d.name,label:`${d.name} - 상장일`,labelSub:`락업 있음 / 매매가능일: ${d.tradeable}`,text:it.text,detail:it.detail});
       });
     }
   });
@@ -1325,7 +1345,7 @@ function buildTaskList() {
       {suffix:'4',text:'카카오톡 주금납입완료 보고',detail:'단톡방에 보고문 전송'},
     ];
     items.forEach(it => {
-      tasks.push({id:`${stockName}_pay_${it.suffix}`,ilim,name:stockName,label:`${stockName} - 주금납입 (${ev.desc})`,text:it.text,detail:it.detail});
+      tasks.push({id:`${stockName}_pay_${it.suffix}`,ilim,name:stockName,label:`${stockName} - 주금납입`,labelSub:ev.desc,text:it.text,detail:it.detail});
     });
   });
 
@@ -1341,7 +1361,7 @@ function buildTaskList() {
       {suffix:'3',text:'IFIS 잔액과 증권사 거래내역 일치 여부 확인',detail:''},
     ];
     items.forEach(it => {
-      tasks.push({id:`${stockName}_settle_${it.suffix}`,ilim,name:stockName,label:`${stockName} - 수도결제 (T+2)`,text:it.text,detail:it.detail});
+      tasks.push({id:`${stockName}_settle_${it.suffix}`,ilim,name:stockName,label:`${stockName} - 수도결제`,labelSub:'T+2 수도대금결제',text:it.text,detail:it.detail});
     });
   });
 
@@ -1363,7 +1383,7 @@ function renderChecklist() {
     const groups = {};
     pending.forEach(t => {
       const key = t.ilim+'|'+t.label;
-      if(!groups[key]) groups[key] = {ilim:t.ilim,label:t.label,items:[]};
+      if(!groups[key]) groups[key] = {ilim:t.ilim,label:t.label,labelSub:t.labelSub||'',items:[]};
       groups[key].items.push(t);
     });
     let lastIlim = '';
@@ -1373,7 +1393,8 @@ function renderChecklist() {
         html += `<div class="ilim-section-title" style="border-left-color:${color};margin-top:16px;">${g.ilim}</div>`;
         lastIlim = g.ilim;
       }
-      html += `<div class="checklist-section"><div class="checklist-title"><span class="tag tag-yellow">매일</span> ${g.label}</div>`;
+      const subLine = g.labelSub ? `<div style="font-size:11.5px;color:var(--yellow);font-weight:400;margin-top:3px;opacity:0.85;">${g.labelSub}</div>` : '';
+      html += `<div class="checklist-section"><div class="checklist-title"><span class="tag tag-yellow">매일</span> ${g.label}${subLine}</div>`;
       g.items.forEach(t => {
         html += `<div class="check-item"><input type="checkbox" onchange="toggleCheck('${t.id}')"><div>${t.text}${t.detail?'<div class="check-detail">'+t.detail+'</div>':''}</div></div>`;
       });
@@ -1868,6 +1889,59 @@ function getSellEvents(name) {
   return CAL_EVENTS.filter(e => e.title.includes('매도완료') && e.title.includes(name));
 }
 
+function renderWaiting() {
+  const area = document.getElementById('waitingArea');
+  const all = getFilteredData('waiting');
+  const waiting = all.filter(d => { const st = getStatus(d); return st === 'waiting' || st === 'listing-today'; });
+  const listingToday = waiting.filter(d => getStatus(d) === 'listing-today');
+  const waitingOnly = waiting.filter(d => getStatus(d) === 'waiting');
+  const cnt = waiting.length;
+  const badge = document.getElementById('waitingBadge');
+  if(cnt > 0) { badge.style.display=''; badge.textContent = cnt; } else { badge.style.display='none'; }
+  document.getElementById('waitingCount').textContent = cnt;
+  document.getElementById('waitingListingTodayCount').textContent = listingToday.length;
+  const allocTotal = waiting.reduce((s,d) => s+(d.alloc||0), 0);
+  document.getElementById('waitingAllocTotal').textContent = fmt(allocTotal) + '원';
+  if(!cnt) { area.innerHTML = '<div class="checklist-section"><div class="checklist-title">상장대기 종목이 없습니다</div></div>'; return; }
+  let html = '';
+  if(listingToday.length) {
+    html += '<div class="ilim-section-title" style="margin-bottom:12px;border-left-color:var(--orange);">오늘 상장 종목 (' + listingToday.length + '건)</div>';
+    html += listingToday.map(d => renderWaitingCard(d, 'listing-today')).join('');
+  }
+  if(waitingOnly.length) {
+    html += '<div class="ilim-section-title" style="margin-top:20px;margin-bottom:12px;border-left-color:var(--accent);">상장 대기 종목 (' + waitingOnly.length + '건)</div>';
+    html += waitingOnly.sort((a,b) => a.listing.localeCompare(b.listing)).map(d => renderWaitingCard(d, 'waiting')).join('');
+  }
+  area.innerHTML = html;
+}
+
+function renderWaitingCard(d, st) {
+  const color = ILIM_COLORS[d.ilim] || '#60a5fa';
+  const ilimShort = (d.ilim||'').replace('일임','');
+  const borderColor = st === 'listing-today' ? 'var(--orange)' : color;
+  const stTag = st === 'listing-today'
+    ? '<span class="tag tag-orange">상장일</span>'
+    : '<span class="tag tag-blue">상장대기</span>';
+  const listingDate = new Date(d.listing);
+  const daysLeft = Math.ceil((listingDate - today) / (1000*60*60*24));
+  const daysText = st === 'listing-today' ? '오늘 상장' : 'D-' + daysLeft;
+  return `
+  <div class="checklist-section" style="border-left:3px solid ${borderColor};margin-bottom:12px;">
+    <div class="checklist-title">
+      <span style="background:${color}22;color:${color};font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;">${ilimShort}</span>
+      ${d.name} ${stTag}
+      <span style="margin-left:auto;font-size:12px;font-weight:700;color:${st==='listing-today'?'var(--orange)':'var(--accent2)'};">${daysText}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:12px;">
+      <div><div class="stat-label">공모단가</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:700;">${fmt(d.price)}원</div></div>
+      <div><div class="stat-label">배정수량</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:700;">${fmt(d.qty)}주</div></div>
+      <div><div class="stat-label">배정금액</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:700;">${fmt(d.alloc)}원</div></div>
+      <div><div class="stat-label">상장일</div><div style="font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:700;">${d.listing}</div></div>
+    </div>
+    <div style="margin-top:12px;font-size:12px;color:var(--text2);">주관사: ${d.broker} | 락업: ${d.lockup} | 매매가능일: ${d.tradeable} | 투자총액: ${fmt(d.total)}원</div>
+  </div>`;
+}
+
 function renderHolding() {
   const area = document.getElementById('holdingArea');
   // 일부매도 종목(realized 있는 holding)은 제외 — 순수 보유만 표시
@@ -1994,19 +2068,21 @@ const CAL_EVENTS = [
 ];
 
 // 페이지별 일임 필터 상태
-const ilimFilter = {cal:{},portfolio:{},holding:{},partial:{},completed:{}};
+const ilimFilter = {cal:{},portfolio:{},waiting:{},holding:{},partial:{},completed:{}};
 const ALL_ILIMS = ['블랙보드일임','마크일임'];
 
 function initAllIlimToggles() {
   ALL_ILIMS.forEach(il => {
     ilimFilter.cal[il] = true;
     ilimFilter.portfolio[il] = true;
+    ilimFilter.waiting[il] = true;
     ilimFilter.holding[il] = true;
     ilimFilter.partial[il] = true;
     ilimFilter.completed[il] = true;
   });
   renderPageToggles('cal','ilimToggles');
   renderPageToggles('portfolio','portfolioIlimToggles');
+  renderPageToggles('waiting','waitingIlimToggles');
   renderPageToggles('holding','holdingIlimToggles');
   renderPageToggles('partial','partialIlimToggles');
   renderPageToggles('completed','compIlimToggles');
@@ -2027,10 +2103,11 @@ function renderPageToggles(page, areaId) {
 
 function togglePageIlim(page, il) {
   ilimFilter[page][il] = !ilimFilter[page][il];
-  const areaMap = {cal:'ilimToggles',portfolio:'portfolioIlimToggles',holding:'holdingIlimToggles',partial:'partialIlimToggles',completed:'compIlimToggles'};
+  const areaMap = {cal:'ilimToggles',portfolio:'portfolioIlimToggles',waiting:'waitingIlimToggles',holding:'holdingIlimToggles',partial:'partialIlimToggles',completed:'compIlimToggles'};
   renderPageToggles(page, areaMap[page]);
   if(page==='cal') { renderCalGrid(); renderCalList(); }
   else if(page==='portfolio') { renderTable(); applyStatusFilter(); }
+  else if(page==='waiting') { renderWaiting(); }
   else if(page==='holding') { renderHolding(); }
   else if(page==='partial') { renderPartial(); }
   else if(page==='completed') { renderCompleted(); }
@@ -2208,6 +2285,7 @@ renderIlimSummary();
 renderChecklist();
 initAllIlimToggles();
 renderTable();
+renderWaiting();
 renderHolding();
 renderPartial();
 renderCompleted();
