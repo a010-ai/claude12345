@@ -284,7 +284,10 @@ tbody tr:hover { background:var(--surface2); }
         <div class="table-toolbar" style="flex-direction:column;align-items:stretch;gap:10px;">
           <div style="display:flex;align-items:center;justify-content:space-between;">
             <h3>전체 종목 (<span id="allCount">0</span>) <span style="font-size:11px;font-weight:400;color:var(--text2);margin-left:8px;">최종 업데이트: <span id="lastUpdate"></span></span></h3>
-            <div id="portfolioIlimToggles" style="display:flex;gap:6px;"></div>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <button onclick="downloadPortfolioExcel()" style="padding:6px 14px;font-size:11px;font-weight:600;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);cursor:pointer;display:flex;align-items:center;gap:4px;">&#128229; 엑셀 다운로드</button>
+              <div id="portfolioIlimToggles" style="display:flex;gap:6px;"></div>
+            </div>
           </div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;">
             <div class="filter-tab active" id="stf-all" onclick="filterTable('all',this)">전체</div>
@@ -1521,6 +1524,29 @@ function applyStatusFilter() {
   // 활성 버튼 표시 유지
   const activeEl = document.getElementById('stf-'+f);
   if(activeEl) { document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active')); activeEl.classList.add('active'); }
+}
+
+function downloadPortfolioExcel() {
+  const fmt = v => v != null ? v : '';
+  const header = ['순번','일임','종목명','주관사','공모단가','배정수량','배정금액','투자총액','상장일','락업','매매가능일','보유수량','실현손익','평가손익','전일종가','총손익','수익률','상태'];
+  const rows = [header];
+  const filtered = getFilteredData('portfolio');
+  filtered.forEach(d => {
+    const st = getStatus(d);
+    rows.push([d.seq, d.ilim, d.name, d.broker, d.price, d.qty, d.alloc, d.total, d.listing, d.lockup, d.tradeable, d.holding, d.realized, d.unrealized, d.closePrice, d.totalPnl, d.returnRate, st.label]);
+  });
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  const numCols = [4,5,6,7,11,12,13,14,15];
+  numCols.forEach(c => {
+    for(let r=1; r<=filtered.length; r++) {
+      const addr = XLSX.utils.encode_cell({r:r,c:c});
+      if(ws[addr] && typeof ws[addr].v === 'number') ws[addr].z = '#,##0';
+    }
+  });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, '참여현황');
+  const today = new Date().toISOString().slice(0,10).replace(/-/g,'');
+  XLSX.writeFile(wb, 'ipo공모주참여현황_' + today + '.xlsx');
 }
 
 function getSellEvents(name) {
