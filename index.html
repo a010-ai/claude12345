@@ -269,6 +269,7 @@ tbody tr:hover { background:var(--surface2); }
         <button onclick="calToday()" style="background:var(--blue-bg);border:1px solid var(--accent);color:var(--accent2);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;margin-left:4px;">오늘</button>
         <a href="https://calendar.google.com/calendar/r?cid=b0358280ed2bfa1daeb67a337327bda347135b557172b277247b007914b9dfd6@group.calendar.google.com" target="_blank" style="background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;text-decoration:none;display:inline-flex;align-items:center;gap:5px;margin-left:4px;">&#128279; Google Calendar</a>
         <button onclick="sendTeamMail('calendar')" style="background:var(--blue-bg);border:1px solid var(--accent);color:var(--accent2);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;display:inline-flex;align-items:center;gap:5px;">&#9993; 팀메일 발송</button>
+        <button onclick="downloadCalendarExcel()" style="background:var(--green-bg);border:1px solid var(--green);color:var(--green);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;display:inline-flex;align-items:center;gap:5px;">&#128229; 엑셀 다운로드</button>
         <span style="color:var(--text2);font-size:11px;margin-left:8px;">|</span>
         <div id="ilimToggles" style="display:flex;gap:6px;"></div>
       </div>
@@ -2003,6 +2004,88 @@ function renderCalList() {
       <div><div class="cal-title">${ilimTag}${cleanTitle}</div><div class="cal-desc">${e.desc}</div></div>
     </div>`;
   }).join('');
+}
+
+function downloadCalendarExcel() {
+  const wb = XLSX.utils.book_new();
+  const year = calYear, month = calMonth;
+  const first = new Date(year, month, 1);
+  const last = new Date(year, month + 1, 0);
+  const days = last.getDate();
+  const evts = getFilteredEvents().filter(e => e.date.startsWith(`${year}-${String(month+1).padStart(2,'0')}`));
+
+  // 주차별 달력 구성 (월~금)
+  const weeks = [];
+  let currentWeek = ['','','','',''];
+  for(let d = 1; d <= days; d++) {
+    const dow = new Date(year, month, d).getDay();
+    if(dow === 0 || dow === 6) continue; // 토/일 제외
+    const monIdx = (dow + 6) % 7; // 0=월 ~ 4=금
+    const ds = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const dayEvts = evts.filter(e => e.date === ds);
+    let cell = `${d}일`;
+    if(dayEvts.length) {
+      cell += '\n' + dayEvts.map(e => {
+        const ilim = e.ilim ? '[' + e.ilim.replace('일임','') + '] ' : '';
+        const title = e.title.replace(/\[.*?\]\s*/, '');
+        return ilim + title;
+      }).join('\n');
+    }
+    currentWeek[monIdx] = cell;
+    if(monIdx === 4) { // 금요일이면 주차 완료
+      weeks.push(currentWeek);
+      currentWeek = ['','','','',''];
+    }
+  }
+  if(currentWeek.some(c => c)) weeks.push(currentWeek);
+
+  // 시트 생성
+  const title = `${year}년 ${month+1}월 IPO 캘린더 일정`;
+  const rows = [[title,'','','',''], ['월','화','수','목','금']];
+  weeks.forEach(w => rows.push(w));
+
+  // 일정 목록 시트도 추가
+  rows.push([]);
+  rows.push(['날짜','요일','일임','일정명','상세']);
+  const sortedEvts = [...evts].sort((a,b) => a.date.localeCompare(b.date));
+  sortedEvts.forEach(e => {
+    const d = new Date(e.date);
+    const dow = ['일','월','화','수','목','금','토'][d.getDay()];
+    rows.push([e.date, dow, e.ilim, e.title.replace(/\[.*?\]\s*/,''), e.desc]);
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+
+  // 제목 행 병합
+  ws['!merges'] = [{s:{r:0,c:0},e:{r:0,c:4}}];
+
+  // 열 너비 설정
+  ws['!cols'] = [{wch:22},{wch:22},{wch:22},{wch:22},{wch:22}];
+
+  // 달력 셀에 줄바꿈 적용
+  for(let r = 2; r < 2 + weeks.length; r++) {
+    for(let c = 0; c < 5; c++) {
+      const addr = XLSX.utils.encode_cell({r:r, c:c});
+      if(ws[addr] && ws[addr].v) {
+        ws[addr].s = {alignment:{wrapText:true, vertical:'top'}};
+      }
+    }
+  }
+
+  XLSX.utils.book_append_sheet(wb, ws, `${month+1}월 캘린더`);
+
+  // 일정 목록 별도 시트
+  const listRows = [['날짜','요일','일임','일정명','상세']];
+  sortedEvts.forEach(e => {
+    const d = new Date(e.date);
+    const dow = ['일','월','화','수','목','금','토'][d.getDay()];
+    listRows.push([e.date, dow, e.ilim, e.title.replace(/\[.*?\]\s*/,''), e.desc]);
+  });
+  const ws2 = XLSX.utils.aoa_to_sheet(listRows);
+  ws2['!cols'] = [{wch:12},{wch:4},{wch:14},{wch:40},{wch:50}];
+  XLSX.utils.book_append_sheet(wb, ws2, '일정 목록');
+
+  XLSX.writeFile(wb, `IPO캘린더_${year}${String(month+1).padStart(2,'0')}.xlsx`);
 }
 
 function renderCalendar() { renderCalGrid(); renderCalList(); }
