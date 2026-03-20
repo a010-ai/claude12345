@@ -97,6 +97,7 @@ tbody tr:hover { background:var(--surface2); }
 .status-completed { background:var(--green-bg); color:var(--green); }
 .status-holding { background:var(--yellow-bg); color:var(--yellow); }
 .status-waiting { background:var(--blue-bg); color:var(--accent2); }
+.status-listing-today { background:var(--orange-bg); color:var(--orange); }
 .status-partial { background:var(--orange-bg); color:var(--orange); }
 .table-scroll { max-height:520px; overflow-y:auto; }
 /* 전체 페이지 스크롤바 */
@@ -233,6 +234,9 @@ tbody tr:hover { background:var(--surface2); }
       <div class="nav-item" onclick="showPage('email',this)">
         <span class="nav-icon">&#9993;</span> 이메일주소 설정
       </div>
+      <div class="nav-item" onclick="showPage('changelog',this)">
+        <span class="nav-icon">&#128221;</span> 변경이력
+      </div>
     </div>
   </aside>
 
@@ -340,7 +344,7 @@ tbody tr:hover { background:var(--surface2); }
         <div class="table-toolbar"><h3>완료 종목 (<span id="compCount">0</span>)</h3></div>
         <div class="table-scroll">
           <table><thead><tr>
-            <th>순번</th><th>일임</th><th>종목명</th><th>공모단가</th><th>배정금액</th><th>매도내역</th><th>실현손익</th><th>수익률</th>
+            <th>순번</th><th>일임</th><th>종목명</th><th>공모단가</th><th>배정금액</th><th>실현손익</th><th>수익률</th><th>매도내역</th>
           </tr></thead><tbody id="compBody"></tbody></table>
         </div>
       </div>
@@ -435,6 +439,19 @@ tbody tr:hover { background:var(--surface2); }
         <div id="emailListArea"></div>
         <div style="margin-top:12px;font-size:11px;color:var(--text2);">이메일 추가/삭제 시 비밀번호 인증이 필요합니다.</div>
       </div>
+    </div>
+
+    <!-- 변경이력 -->
+    <div id="page-changelog" class="page">
+      <div class="page-header"><h2>변경이력</h2><p>대시보드 기능 업데이트 및 수정 이력</p></div>
+      <div style="margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button onclick="filterChangelog('all')" id="cl-filter-all" class="tag" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1px solid var(--accent);background:var(--blue-bg);color:var(--accent2);font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;">전체</button>
+        <button onclick="filterChangelog('feature')" id="cl-filter-feature" class="tag" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1px solid var(--green);background:var(--green-bg);color:var(--green);font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;">기능추가</button>
+        <button onclick="filterChangelog('fix')" id="cl-filter-fix" class="tag" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1px solid var(--red);background:var(--red-bg);color:var(--red);font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;">버그수정</button>
+        <button onclick="filterChangelog('improve')" id="cl-filter-improve" class="tag" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1px solid var(--yellow);background:var(--yellow-bg);color:var(--yellow);font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;">개선</button>
+        <button onclick="filterChangelog('ui')" id="cl-filter-ui" class="tag" style="cursor:pointer;padding:6px 14px;border-radius:20px;border:1px solid var(--purple);background:rgba(167,139,250,0.1);color:var(--purple);font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;">UI/디자인</button>
+      </div>
+      <div id="changelogArea"></div>
     </div>
   </main>
 </div>
@@ -1215,13 +1232,41 @@ function toggleCheck(taskId) {
 
 function buildTaskList() {
   const tasks = [];
+
+  // ── 1. DATA 기반: 보유 중(holding) 종목 업무 ──
   const ilims = [...new Set(DATA.map(d => d.ilim))];
   ilims.forEach(ilim => {
     DATA.filter(d => d.ilim === ilim && d.holding).forEach(d => {
-      const isLockup = todayStr < d.tradeable;
-      if(isLockup) {
+      const isListingToday = todayStr === d.listing;
+      const isLockup = todayStr > d.listing && todayStr < d.tradeable;
+      const isSellable = todayStr >= d.tradeable;
+
+      if(isListingToday && d.listing === d.tradeable) {
+        // Case 3.1: 상장일 당일 (락업 없음) = 상장+매도 동시
+        const items = [
+          {suffix:'1',text:'운용사 매도완료 보고 확인',detail:''},
+          {suffix:'2',text:'외부망 - 운용사 매도거래내역 엑셀 확인',detail:''},
+          {suffix:'3',text:'외부망 - 증권사 거래내역 파일 확인',detail:''},
+          {suffix:'4',text:'자산운용시스템: 상장 처리 → 매도 처리',detail:'일부/전량 확인 필수'},
+          {suffix:'5',text:'카카오톡 매도 보고 - 단톡방 전송',detail:''},
+        ];
+        items.forEach(it => {
+          tasks.push({id:`${d.name}_listingsell_${it.suffix}`,ilim,name:d.name,label:`${d.name} - 상장 및 매도가능일 (상장+매도 동시)`,text:it.text,detail:it.detail});
+        });
+      } else if(isListingToday && d.listing !== d.tradeable) {
+        // Case 3.2: 상장일 당일 (락업 있음) = 상장만 처리
+        const items = [
+          {suffix:'1',text:'외부망 - 증권사 거래내역 파일 확인 (계좌대체입고)',detail:''},
+          {suffix:'2',text:'자산운용시스템 - 주식 거래: 주식 매입(상장) 처리',detail:''},
+        ];
+        items.forEach(it => {
+          tasks.push({id:`${d.name}_listing_${it.suffix}`,ilim,name:d.name,label:`${d.name} - 상장일 (락업 있음, 매매가능일: ${d.tradeable})`,text:it.text,detail:it.detail});
+        });
+      } else if(isLockup) {
+        // Case 3.3: 락업 기간 중
         tasks.push({id:`${d.name}_lockup_1`,ilim,name:d.name,label:`${d.name} - 락업 중 (매매가능일: ${d.tradeable})`,text:'오전 9시 기준가 입력',detail:`전일 종가로 자산운용시스템 단가관리 입력 필수 (현재종가: ${fmt(d.closePrice)}원)`});
-      } else {
+      } else if(isSellable && !isListingToday) {
+        // Case 3.4: 매매가능일 이후 미매도
         const items = [
           {suffix:'1',text:'오전 9시 기준가 입력',detail:`전일 종가로 자산운용시스템 단가관리 입력 (현재종가: ${fmt(d.closePrice)}원)`},
           {suffix:'2',text:'운용사 매도 여부 확인',detail:''},
@@ -1235,6 +1280,71 @@ function buildTaskList() {
       }
     });
   });
+
+  // ── 2. DATA 기반: holding=null 이지만 오늘이 상장일인 종목 ──
+  DATA.filter(d => !d.holding && !d.realized && todayStr === d.listing).forEach(d => {
+    const ilim = d.ilim;
+    if(d.listing === d.tradeable) {
+      // 상장+매도 동시 (holding이 아직 null인 상장대기 종목)
+      const items = [
+        {suffix:'1',text:'운용사 매도완료 보고 확인',detail:''},
+        {suffix:'2',text:'외부망 - 운용사 매도거래내역 엑셀 확인',detail:''},
+        {suffix:'3',text:'외부망 - 증권사 거래내역 파일 확인',detail:''},
+        {suffix:'4',text:'자산운용시스템: 상장 처리 → 매도 처리',detail:'일부/전량 확인 필수'},
+        {suffix:'5',text:'카카오톡 매도 보고 - 단톡방 전송',detail:''},
+      ];
+      items.forEach(it => {
+        tasks.push({id:`${d.name}_listingsell_${it.suffix}`,ilim,name:d.name,label:`${d.name} - 상장 및 매도가능일 (상장+매도 동시)`,text:it.text,detail:it.detail});
+      });
+    } else {
+      // 상장일이지만 락업 있음
+      const items = [
+        {suffix:'1',text:'외부망 - 증권사 거래내역 파일 확인 (계좌대체입고)',detail:''},
+        {suffix:'2',text:'자산운용시스템 - 주식 거래: 주식 매입(상장) 처리',detail:''},
+      ];
+      items.forEach(it => {
+        tasks.push({id:`${d.name}_listing_${it.suffix}`,ilim,name:d.name,label:`${d.name} - 상장일 (락업 있음, 매매가능일: ${d.tradeable})`,text:it.text,detail:it.detail});
+      });
+    }
+  });
+
+  // ── 3. CAL_EVENTS 기반: 오늘 주금납입(청약) 업무 ──
+  const todayPayEvents = CAL_EVENTS.filter(e => e.date === todayStr && e.title.includes('/청약]'));
+  todayPayEvents.forEach(ev => {
+    // 종목명 추출: [OO일임/청약] 종목명 주금납입
+    const match = ev.title.match(/\[([^\]]+)\/청약\]\s*(.+?)\s*주금납입/);
+    const ilim = ev.ilim;
+    const stockName = match ? match[2] : ev.title;
+    // DATA에 이미 상장일 당일로 처리된 종목은 스킵
+    const alreadyAdded = tasks.some(t => t.name === stockName || t.name === stockName.replace(/\s/g,''));
+    if(alreadyAdded) return;
+    const items = [
+      {suffix:'1',text:'구글캘린더 자동등록 일정 확인',detail:'납입일, 상장일, 매매가능일 정상 등록 확인'},
+      {suffix:'2',text:'증권사 오전 통화 (이체동의)',detail:'주간사에 전화, 공문 내용 확인, 이체 동의'},
+      {suffix:'3',text:'자산운용시스템 입력',detail:'수익증권 예치금거래 입력 + IFIS 확인'},
+      {suffix:'4',text:'카카오톡 주금납입완료 보고',detail:'단톡방에 보고문 전송'},
+    ];
+    items.forEach(it => {
+      tasks.push({id:`${stockName}_pay_${it.suffix}`,ilim,name:stockName,label:`${stockName} - 주금납입 (${ev.desc})`,text:it.text,detail:it.detail});
+    });
+  });
+
+  // ── 4. CAL_EVENTS 기반: 오늘 수도결제(T+2) 업무 ──
+  const todaySettleEvents = CAL_EVENTS.filter(e => e.date === todayStr && e.title.includes('/수도결제]'));
+  todaySettleEvents.forEach(ev => {
+    const match = ev.title.match(/\[([^\]]+)\/수도결제\]\s*(.+)/);
+    const ilim = ev.ilim;
+    const stockName = match ? match[2] : ev.title;
+    const items = [
+      {suffix:'1',text:'외부망 - 증권사 거래내역 수령 여부 확인',detail:''},
+      {suffix:'2',text:'자산운용시스템 - 미결반제처리 + 주식거래 자산별전표발의',detail:''},
+      {suffix:'3',text:'IFIS 잔액과 증권사 거래내역 일치 여부 확인',detail:''},
+    ];
+    items.forEach(it => {
+      tasks.push({id:`${stockName}_settle_${it.suffix}`,ilim,name:stockName,label:`${stockName} - 수도결제 (T+2)`,text:it.text,detail:it.detail});
+    });
+  });
+
   return tasks;
 }
 
@@ -1634,8 +1744,8 @@ function renderTable() {
   document.getElementById('lastUpdateCal').textContent = LAST_UPDATE;
   body.innerHTML = filtered.map(d => {
     const st = getStatus(d);
-    const stLabel = st==='completed' ? '완료' : st==='lockup' ? '락업중' : st==='sellable' ? '매도가능' : st==='waiting' ? '상장대기' : '상장일';
-    const stClass = st==='completed' ? 'completed' : st==='lockup' || st==='sellable' ? 'holding' : 'waiting';
+    const stLabel = st==='completed' ? '완료' : st==='lockup' ? '락업중' : st==='sellable' ? '매도가능' : st==='listing-today' ? '상장일' : '상장대기';
+    const stClass = st==='completed' ? 'completed' : st==='lockup' || st==='sellable' ? 'holding' : st==='listing-today' ? 'listing-today' : 'waiting';
     const realClass = (d.realized||0) >= 0 ? 'pnl-pos' : 'pnl-neg';
     const unrealClass = (d.unrealized||0) >= 0 ? 'pnl-pos' : 'pnl-neg';
     const totalClass = (d.totalPnl||0) >= 0 ? 'pnl-pos' : 'pnl-neg';
@@ -1689,7 +1799,8 @@ function downloadPortfolioExcel() {
 
   function toRow(d, seq) {
     const st = getStatus(d);
-    return [seq, d.ilim, d.name, d.broker, d.price, d.qty, d.alloc, d.total, d.listing, d.lockup, d.tradeable, d.holding, d.realized, d.unrealized, d.closePrice, d.totalPnl, d.returnRate, st.label];
+    const stLabel = st==='completed' ? '완료' : st==='lockup' ? '락업중' : st==='sellable' ? '매도가능' : st==='listing-today' ? '상장일' : '상장대기';
+    return [seq, d.ilim, d.name, d.broker, d.price, d.qty, d.alloc, d.total, d.listing, d.lockup, d.tradeable, d.holding, d.realized, d.unrealized, d.closePrice, d.totalPnl, d.returnRate, stLabel];
   }
 
   function styleSheet(ws, dataLen, headerRow) {
@@ -1847,9 +1958,9 @@ function renderCompleted() {
     return `<tr>
     <td>${d.seq}</td><td><span class="tag" style="font-size:9px;background:${ilimColor}22;color:${ilimColor};">${ilimShort}</span></td><td>${d.name}</td><td class="num">${fmt(d.price)}</td>
     <td class="num">${fmt(d.alloc)}</td>
-    <td style="font-size:11px;color:var(--text2);max-width:260px;">${sellInfo}</td>
     <td class="num pnl-pos">${fmt(d.realized)}</td>
     <td class="num">${d.returnRate}</td>
+    <td style="font-size:11px;color:var(--text2);max-width:260px;">${sellInfo}</td>
   </tr>`;
   }).join('');
 }
@@ -2117,6 +2228,231 @@ function calcIlimReturn(ilimName, startDateStr, investAmt, elapsedId, simpleId, 
 }
 calcIlimReturn('블랙보드일임', '2025-11-24', 2000000000, 'elapsedDaysBB', 'simpleReturnBB', 'annualReturnBB');
 calcIlimReturn('마크일임', '2025-09-27', 2000000000, 'elapsedDaysMK', 'simpleReturnMK', 'annualReturnMK');
+
+// ── 변경이력 ──
+const CHANGELOG = [
+  {
+    ver: 'v2.7', date: '2026-03-20', type: 'improve',
+    title: '업무일지 엑셀 다운로드 개선',
+    items: [
+      '파일명에 날짜 포함: 업무일지_YYYYMMDD.xlsx (다운로드 시점 날짜)',
+      '전체 태스크 포함: 미완료(해야할일) + 완료된 할일 모두 저장',
+      '상태 컬럼 추가: 완료/미완료 구분 표시',
+      '상세내용 컬럼 추가: 기준가 입력 시 종가 정보 등 포함',
+      '컬럼 구성 7열: 순번, 상태, 일임, 종목명, 업무내용, 상세내용, 완료시각',
+    ]
+  },
+  {
+    ver: 'v2.6', date: '2026-03-20', type: 'feature',
+    title: '변경이력 페이지 추가',
+    items: [
+      '설정 메뉴에 "변경이력" 페이지 신규 추가',
+      '기능추가/버그수정/개선/UI 카테고리별 필터',
+      '버전별 타임라인 형태로 이력 표시',
+    ]
+  },
+  {
+    ver: 'v2.5', date: '2026-03-19', type: 'feature',
+    title: '일부매도 종목 탭 추가',
+    items: [
+      '일부매도 후 잔량 보유 중인 종목 전용 페이지 추가',
+      '매도내역(매도일, 매도수량, 매도단가, 실현손익) 표시',
+      '사이드바 데이터 그룹에 "일부매도 종목" 메뉴 추가',
+    ]
+  },
+  {
+    ver: 'v2.4', date: '2026-03-19', type: 'feature',
+    title: '텍스트 매도 명령 지원',
+    items: [
+      '텔레그램에서 이미지 없이 텍스트만으로 매도 처리 가능',
+      '필수값: 일임명, 종목명, 매도평균단가, 매도주수, 수수료및제세금, 정산금액',
+      '정산금액 자동 검증 (±1,000원 이내)',
+      '일부매도/전량매도 자동 구분',
+    ]
+  },
+  {
+    ver: 'v2.3', date: '2026-03-19', type: 'feature',
+    title: 'KRX 종가 자동 다운로드',
+    items: [
+      'KRX 정보데이터시스템 종가 자동 다운로드 스크립트 추가',
+      '평일 17:00 Windows Task Scheduler 자동 실행',
+      '텔레그램 "종가 다운로드" 명령으로 수동 실행 가능',
+      '보유종목 평가손익 자동 계산 및 대시보드/엑셀 업데이트',
+    ]
+  },
+  {
+    ver: 'v2.2', date: '2026-03-18', type: 'feature',
+    title: '팀메일 발송 + 이메일주소 설정',
+    items: [
+      '오늘의 할일 페이지에 "팀메일 발송" 버튼 추가',
+      '이메일주소 설정 페이지 신규 추가 (추가/삭제, 비밀번호 인증)',
+      '업무일지 내용을 이메일 본문으로 자동 구성',
+    ]
+  },
+  {
+    ver: 'v2.1', date: '2026-03-18', type: 'ui',
+    title: '모바일 반응형 디자인',
+    items: [
+      '768px 이하 햄버거 메뉴 + 슬라이드 드로어 사이드바',
+      '통계 카드 그리드: 4열(PC) → 2열(태블릿) → 1열(스마트폰)',
+      '캘린더: 월요일 시작 레이아웃, 모바일에서 토/일 숨김',
+      '테이블 가로 스크롤 지원',
+    ]
+  },
+  {
+    ver: 'v2.0', date: '2026-03-18', type: 'fix',
+    title: '종가반영여부 표시 누락 수정',
+    items: [
+      'output/dashboard.html에 종가반영여부 코드 추가 후 GitHub push 누락 수정',
+      '평가손익 카드 하단 + 보유종목 제목 옆에 종가반영 상태 표시',
+    ]
+  },
+  {
+    ver: 'v1.9', date: '2026-03-18', type: 'feature',
+    title: '텔레그램 봇 기능 확장',
+    items: [
+      '"상태" 명령: 서버/대시보드/엑셀/캘린더 상태 확인',
+      '"파일찾기" 명령: 종목명/날짜/일임명으로 파일 검색',
+      '"위치수정" 명령: 잘못 저장된 파일 폴더 이동',
+      '파일 업로드 결과 멘트 개선 (저장위치, 파일명, 총 파일수)',
+    ]
+  },
+  {
+    ver: 'v1.8', date: '2026-03-18', type: 'feature',
+    title: '텔레그램 봇 종가 업데이트',
+    items: [
+      '"세미파이브 종가 31000" 형식으로 개별 종목 종가 업데이트',
+      '엑셀 Q열(종가), O열(평가손익), P열(총손익) 자동 업데이트',
+      '대시보드 HTML + GitHub push + Vercel 자동 재배포',
+    ]
+  },
+  {
+    ver: 'v1.7', date: '2026-03-17', type: 'improve',
+    title: '과거 데이터 검증 + 21종목 반영',
+    items: [
+      '18개 이미지 파싱으로 20종목 매도 데이터 검증',
+      '신규 5종목 추가 (케이뱅크, 에스팀, 카나프테라퓨틱스, 덕양에너젠, 삼성스팩13호)',
+      '최종 업데이트 시각 표시 (YYYY-MM-DD HH:MM)',
+    ]
+  },
+  {
+    ver: 'v1.6', date: '2026-03-17', type: 'feature',
+    title: '일임계약 정보 페이지',
+    items: [
+      '블랙보드일임/마크일임 설정 정보 표시',
+      '기표일자, 투자원금, 경과일수, 단순수익률, 연환산수익률 표시',
+      '일임별 토글 필터 추가 (참여현황/보유/완료 종목)',
+    ]
+  },
+  {
+    ver: 'v1.5', date: '2026-03-17', type: 'feature',
+    title: '구글캘린더 일정 뷰',
+    items: [
+      '월별 캘린더 그리드 뷰 구현',
+      '청약(노란), 상장/매도(파란), 수도결제(주황) 색상 구분',
+      '일임별 토글 필터',
+    ]
+  },
+  {
+    ver: 'v1.4', date: '2026-03-17', type: 'feature',
+    title: '업무 대시보드 최초 생성',
+    items: [
+      'output/dashboard.html 단일 HTML 파일 생성',
+      '다크 테마 + 사이드바 네비게이션',
+      'Vercel 배포 (https://claude12345-jlsm.vercel.app/)',
+      '비밀번호 로그인 (oksb7979)',
+      '오늘의 할일, 참여현황, 보유종목, 완료종목 페이지',
+    ]
+  },
+  {
+    ver: 'v1.3', date: '2026-03-17', type: 'feature',
+    title: 'Mode C 매도 프로세스',
+    items: [
+      '매도 증빙자료 파싱 + 카톡 매도 보고문 생성',
+      '구글캘린더: 매도완료(파란색) + 수도결제(주황색) 일정 등록',
+      '실현손익 = 매도단가×배정수량 - 배정금액',
+    ]
+  },
+  {
+    ver: 'v1.2', date: '2026-03-17', type: 'feature',
+    title: '구글캘린더 자동 등록',
+    items: [
+      'Mode A에서 gws calendar events insert 자동 실행',
+      '색상 규칙: 청약(노란/5), 상장(파란/9), 수도결제(주황/6)',
+      '캘린더 일정 메모에 카톡 보고문 포함',
+    ]
+  },
+  {
+    ver: 'v1.1', date: '2026-03-17', type: 'improve',
+    title: 'Mode A 통합 플로우',
+    items: [
+      '사용자 확인 후 교차검증+카톡보고문+캘린더+엑셀 자동 일괄 처리',
+      '다중 일임계약 지원 (폴더명에서 일임명 자동 추출)',
+    ]
+  },
+  {
+    ver: 'v1.0', date: '2026-03-16', type: 'feature',
+    title: 'ok-일임 Skill 최초 생성',
+    items: [
+      'Mode A: 청약 공문 파싱 + 카톡 보고문 + 엑셀 업데이트',
+      'Mode B: 오늘의 할일 체크리스트',
+      '텔레그램 봇 연동',
+    ]
+  },
+];
+
+const CL_COLORS = {
+  feature: {border:'var(--green)',bg:'var(--green-bg)',color:'var(--green)',label:'기능추가'},
+  fix: {border:'var(--red)',bg:'var(--red-bg)',color:'var(--red)',label:'버그수정'},
+  improve: {border:'var(--yellow)',bg:'var(--yellow-bg)',color:'var(--yellow)',label:'개선'},
+  ui: {border:'var(--purple)',bg:'rgba(167,139,250,0.1)',color:'var(--purple)',label:'UI/디자인'},
+};
+
+let clFilter = 'all';
+function filterChangelog(f) {
+  clFilter = f;
+  document.querySelectorAll('[id^="cl-filter-"]').forEach(b => {
+    b.style.opacity = '0.5'; b.style.fontWeight = '400';
+  });
+  const active = document.getElementById('cl-filter-' + f);
+  if(active) { active.style.opacity = '1'; active.style.fontWeight = '600'; }
+  renderChangelog();
+}
+
+function renderChangelog() {
+  const area = document.getElementById('changelogArea');
+  const list = clFilter === 'all' ? CHANGELOG : CHANGELOG.filter(c => c.type === clFilter);
+  if(!list.length) { area.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text2);">해당 카테고리의 변경이력이 없습니다.</div>'; return; }
+
+  let html = '';
+  let lastDate = '';
+  list.forEach((c, idx) => {
+    const cl = CL_COLORS[c.type] || CL_COLORS.feature;
+    const showDate = c.date !== lastDate;
+    lastDate = c.date;
+
+    if(showDate) {
+      html += `<div style="display:flex;align-items:center;gap:12px;margin:${idx?'28px':'8px'} 0 16px;">
+        <div style="font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;">${c.date}</div>
+        <div style="flex:1;height:1px;background:var(--border);"></div>
+      </div>`;
+    }
+
+    html += `<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;margin-bottom:12px;border-left:3px solid ${cl.border};">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+        <span style="background:${cl.bg};color:${cl.color};padding:3px 10px;border-radius:12px;font-size:11px;font-weight:600;">${cl.label}</span>
+        <span style="font-size:12px;font-weight:700;color:var(--accent2);background:var(--blue-bg);padding:3px 10px;border-radius:12px;">${c.ver}</span>
+        <span style="font-size:15px;font-weight:700;color:var(--text);">${c.title}</span>
+      </div>
+      <ul style="margin:0;padding-left:20px;">
+        ${c.items.map(i => `<li style="font-size:13px;color:var(--text2);line-height:1.8;">${i}</li>`).join('')}
+      </ul>
+    </div>`;
+  });
+  area.innerHTML = html;
+}
+renderChangelog();
+filterChangelog('all');
 </script>
 </body>
 </html>
