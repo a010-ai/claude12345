@@ -1409,17 +1409,49 @@ function buildMailContent(source) {
     const tasks = buildTaskList();
     const pending = tasks.filter(t => !state[t.id]);
     const done = tasks.filter(t => state[t.id]);
-    body = `IPO 공모주 일임계약 업무 현황 (${todayStr})\n\n`;
+    body = `IPO 공모주 업무 현황 (${todayStr})\n`;
+
+    // 일임별 → 종목별 그룹핑 함수
+    function groupByIlimStock(list) {
+      const map = {};
+      list.forEach(t => {
+        const ilim = t.ilim.replace('일임','');
+        if(!map[ilim]) map[ilim] = {};
+        if(!map[ilim][t.name]) map[ilim][t.name] = [];
+        map[ilim][t.name].push(t);
+      });
+      return map;
+    }
+
     if(pending.length) {
-      body += `■ 미완료 (${pending.length}건)\n`;
-      pending.forEach(t => body += `- [${t.ilim}] ${t.name}: ${t.text}\n`);
-      body += '\n';
+      body += `\n■ 미완료 (${pending.length}건)\n`;
+      const groups = groupByIlimStock(pending);
+      const ilims = Object.keys(groups);
+      ilims.forEach((ilim, idx) => {
+        if(idx > 0) body += '\n';
+        body += `\n【${ilim}】\n`;
+        Object.entries(groups[ilim]).forEach(([stock, items]) => {
+          body += `  ▸ ${stock}\n`;
+          items.forEach(t => body += `     - ${t.text}\n`);
+        });
+      });
     }
+
     if(done.length) {
-      body += `■ 완료 (${done.length}건)\n`;
-      done.forEach(t => body += `- [${t.ilim}] ${t.name}: ${t.text} (완료: ${state[t.id]})\n`);
+      body += `\n■ 완료 (${done.length}건)\n`;
+      const groups = groupByIlimStock(done);
+      const ilims = Object.keys(groups);
+      ilims.forEach((ilim, idx) => {
+        if(idx > 0) body += '\n';
+        body += `\n【${ilim}】\n`;
+        Object.entries(groups[ilim]).forEach(([stock, items]) => {
+          body += `  ▸ ${stock}\n`;
+          items.forEach(t => body += `     - ${t.text} (${state[t.id]})\n`);
+        });
+      });
     }
-    if(!tasks.length) body += '오늘 처리할 업무가 없습니다.\n';
+
+    if(!tasks.length) body += '\n오늘 처리할 업무가 없습니다.\n';
   } else {
     const prefix = `${calYear}-${String(calMonth+1).padStart(2,'0')}`;
     const monthEvts = getFilteredEvents().filter(e => e.date.startsWith(prefix)).sort((a,b) => a.date.localeCompare(b.date));
