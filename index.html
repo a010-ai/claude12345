@@ -1401,10 +1401,7 @@ function renderEmailList() {
 }
 
 // 팀메일 발송 (mailto)
-function sendTeamMail(source) {
-  const emails = getEmails();
-  if(!emails.length) { alert('등록된 이메일이 없습니다.\n설정 > 이메일주소 설정에서 이메일을 추가하세요.'); return; }
-
+function buildMailContent(source) {
   let subject = '', body = '';
   if(source === 'today') {
     subject = `[IPO공모주] ${todayStr} 오늘의 할일`;
@@ -1436,9 +1433,74 @@ function sendTeamMail(source) {
       });
     } else { body += '등록된 일정이 없습니다.\n'; }
   }
+  return {subject, body};
+}
 
-  const mailto = `mailto:${emails.join(',')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-  window.open(mailto);
+function sendTeamMail(source) {
+  const emails = getEmails();
+  if(!emails.length) { alert('등록된 이메일이 없습니다.\n설정 > 이메일주소 설정에서 이메일을 추가하세요.'); return; }
+  const {subject, body} = buildMailContent(source);
+  const to = emails.join(',');
+
+  // 모달 표시
+  let modal = document.getElementById('mailModal');
+  if(modal) modal.remove();
+  modal = document.createElement('div');
+  modal.id = 'mailModal';
+  modal.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:9999;display:flex;align-items:center;justify-content:center;';
+  modal.innerHTML = `
+    <div style="background:var(--surface);border-radius:12px;padding:24px;max-width:560px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 8px 32px rgba(0,0,0,0.3);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <h3 style="font-size:16px;font-weight:700;">팀메일 발송</h3>
+        <button onclick="document.getElementById('mailModal').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text2);">&#10005;</button>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">수신자</div>
+        <div style="font-size:13px;padding:8px 12px;background:var(--surface2);border-radius:6px;word-break:break-all;">${to}</div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">제목</div>
+        <div style="font-size:13px;font-weight:600;padding:8px 12px;background:var(--surface2);border-radius:6px;">${subject}</div>
+      </div>
+      <div style="margin-bottom:16px;">
+        <div style="font-size:11px;color:var(--text2);margin-bottom:4px;">본문 미리보기</div>
+        <pre style="font-size:12px;padding:12px;background:var(--surface2);border-radius:6px;white-space:pre-wrap;word-break:break-word;max-height:240px;overflow-y:auto;line-height:1.6;margin:0;font-family:'Noto Sans KR',sans-serif;">${body.replace(/</g,'&lt;')}</pre>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button onclick="openGmail('${source}')" style="flex:1;background:#4285f4;color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Noto Sans KR',sans-serif;">Gmail로 발송</button>
+        <button onclick="openMailto('${source}')" style="flex:1;background:var(--accent);color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Noto Sans KR',sans-serif;">기본 메일앱</button>
+        <button onclick="copyMailBody('${source}')" style="flex:1;background:var(--surface2);color:var(--text);border:1px solid var(--border);padding:10px 16px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;font-family:'Noto Sans KR',sans-serif;">본문 복사</button>
+      </div>
+      <div id="mailCopyMsg" style="margin-top:8px;font-size:12px;color:var(--green);text-align:center;min-height:18px;"></div>
+    </div>`;
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if(e.target === modal) modal.remove(); });
+}
+
+function openGmail(source) {
+  const emails = getEmails();
+  const {subject, body} = buildMailContent(source);
+  const url = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(emails.join(','))}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  window.open(url, '_blank');
+}
+
+function openMailto(source) {
+  const emails = getEmails();
+  const {subject, body} = buildMailContent(source);
+  window.location.href = `mailto:${emails.join(',')}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}
+
+function copyMailBody(source) {
+  const {subject, body} = buildMailContent(source);
+  const text = `제목: ${subject}\n\n${body}`;
+  navigator.clipboard.writeText(text).then(() => {
+    document.getElementById('mailCopyMsg').textContent = '클립보드에 복사되었습니다.';
+    setTimeout(() => { const el = document.getElementById('mailCopyMsg'); if(el) el.textContent = ''; }, 3000);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    document.getElementById('mailCopyMsg').textContent = '클립보드에 복사되었습니다.';
+  });
 }
 
 const LAST_UPDATE = '2026-03-20 15:30';
