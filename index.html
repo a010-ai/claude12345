@@ -1347,8 +1347,9 @@ function exportChecklist() {
 
   if(!wb.SheetNames.length) { document.getElementById('exportMsg').textContent = '완료된 업무가 없습니다.'; return; }
 
-  XLSX.writeFile(wb, '업무일지.xlsx');
   const now = new Date();
+  const dstr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  XLSX.writeFile(wb, `업무일지_${dstr}.xlsx`);
   const ts = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
   document.getElementById('exportMsg').textContent = `저장 완료 (${ts}) — output2 폴더에 저장해주세요`;
 }
@@ -1523,7 +1524,12 @@ function sendTeamMail(source) {
 function openGmail(source) {
   const emails = getEmails();
   const {subject, body} = buildMailContent(source);
-  const url = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(emails.join(','))}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  // Gmail은 body에 HTML을 지원하므로 줄바꿈/들여쓰기를 <br>/&nbsp;로 변환
+  const htmlBody = body
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/\n/g,'<br>')
+    .replace(/  /g,'&nbsp;&nbsp;');
+  const url = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(emails.join(','))}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(htmlBody)}`;
   window.open(url, '_blank');
 }
 
