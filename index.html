@@ -2006,10 +2006,21 @@ function renderPartial() {
       ${sellEvents.length ? `
       <div style="margin-top:12px;">
         <div class="ilim-section-title">매도 내역</div>
-        <table class="ilim-mini-table" style="margin-top:6px;">
-          <tr><th style="min-width:90px;">매도일자</th><th>내용</th></tr>
-          ${sellEvents.map(e => `<tr><td>${e.date}</td><td style="color:var(--text2);white-space:normal;line-height:1.6;">${e.desc}</td></tr>`).join('')}
-        </table>
+        ${sellEvents.map(e => {
+          const parts = e.desc.split(/\s*\|\s*/);
+          return `<table class="ilim-mini-table" style="margin-top:6px;">
+            <tr><th style="min-width:90px;">매도일자</th><td style="font-weight:600;">${e.date}</td></tr>
+            ${parts.map(p => {
+              const idx = p.indexOf(':');
+              if(idx > -1) {
+                const k = p.substring(0, idx).trim();
+                const v = p.substring(idx+1).trim();
+                return '<tr><th style="min-width:90px;">' + k + '</th><td style="color:var(--text2);">' + v + '</td></tr>';
+              }
+              return '<tr><td colspan="2" style="color:var(--text2);">' + p + '</td></tr>';
+            }).join('')}
+          </table>`;
+        }).join('')}
       </div>` : ''}
       <div style="margin-top:10px;font-size:12px;color:var(--text2);">공모단가: ${fmt(d.price)}원 | 배정금액: ${fmt(d.alloc)}원 | 매매가능일: ${d.tradeable}</div>
     </div>`;
