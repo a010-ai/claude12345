@@ -1763,7 +1763,7 @@ function renderTable() {
   document.getElementById('lastUpdate').textContent = LAST_UPDATE;
   document.getElementById('lastUpdateToday').textContent = LAST_UPDATE;
   document.getElementById('lastUpdateCal').textContent = LAST_UPDATE;
-  body.innerHTML = filtered.map(d => {
+  body.innerHTML = filtered.map((d, idx) => {
     const st = getStatus(d);
     const stLabel = st==='completed' ? '완료' : st==='lockup' ? '락업중' : st==='sellable' ? '매도가능' : st==='listing-today' ? '상장일' : '상장대기';
     const stClass = st==='completed' ? 'completed' : st==='lockup' || st==='sellable' ? 'holding' : st==='listing-today' ? 'listing-today' : 'waiting';
@@ -1773,7 +1773,7 @@ function renderTable() {
     const ilimShort = (d.ilim||'').replace('일임','');
     const ilimColor = ILIM_COLORS[d.ilim] || '#60a5fa';
     return `<tr data-status="${st}">
-      <td>${d.seq}</td><td><span class="tag" style="font-size:9px;background:${ilimColor}22;color:${ilimColor};">${ilimShort}</span></td><td>${d.name}</td><td>${d.broker}</td>
+      <td>${idx + 1}</td><td><span class="tag" style="font-size:9px;background:${ilimColor}22;color:${ilimColor};">${ilimShort}</span></td><td>${d.name}</td><td>${d.broker}</td>
       <td class="num">${fmt(d.price)}</td><td class="num">${fmt(d.qty)}</td>
       <td class="num">${fmt(d.alloc)}</td><td class="num">${fmt(d.total)}</td>
       <td>${d.listing}</td><td>${d.lockup}</td><td class="num">${d.holding||'-'}</td>
@@ -2019,7 +2019,7 @@ function renderPartial() {
 function renderCompleted() {
   const comp = getFilteredData('completed').filter(d => !d.holding && d.realized);
   document.getElementById('compCount').textContent = comp.length;
-  document.getElementById('compBody').innerHTML = comp.map(d => {
+  document.getElementById('compBody').innerHTML = comp.map((d, idx) => {
     const ilimShort = (d.ilim||'').replace('일임','');
     const sellEvents = getSellEvents(d.name);
     let sellInfo = '-';
@@ -2030,7 +2030,7 @@ function renderCompleted() {
     }
     const ilimColor = ILIM_COLORS[d.ilim] || '#60a5fa';
     return `<tr>
-    <td>${d.seq}</td><td><span class="tag" style="font-size:9px;background:${ilimColor}22;color:${ilimColor};">${ilimShort}</span></td><td>${d.name}</td><td class="num">${fmt(d.price)}</td>
+    <td>${idx + 1}</td><td><span class="tag" style="font-size:9px;background:${ilimColor}22;color:${ilimColor};">${ilimShort}</span></td><td>${d.name}</td><td class="num">${fmt(d.price)}</td>
     <td class="num">${fmt(d.alloc)}</td>
     <td class="num pnl-pos">${fmt(d.realized)}</td>
     <td class="num">${d.returnRate}</td>
