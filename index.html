@@ -2006,21 +2006,21 @@ function renderPartial() {
       ${sellEvents.length ? `
       <div style="margin-top:12px;">
         <div class="ilim-section-title">매도 내역</div>
-        ${sellEvents.map(e => {
-          const parts = e.desc.split(/\s*\|\s*/);
-          return `<table class="ilim-mini-table" style="margin-top:6px;">
-            <tr><th style="min-width:90px;">매도일자</th><td style="font-weight:600;">${e.date}</td></tr>
-            ${parts.map(p => {
+        <table class="ilim-mini-table" style="margin-top:6px;">
+          <thead><tr><th>매도일자</th><th>내용</th><th>매도단가</th><th>수수료및제세금</th><th>정산금액</th><th>실현손익</th></tr></thead>
+          <tbody>${sellEvents.map(e => {
+            const fields = {};
+            e.desc.split(/\s*\|\s*/).forEach(p => {
               const idx = p.indexOf(':');
-              if(idx > -1) {
-                const k = p.substring(0, idx).trim();
-                const v = p.substring(idx+1).trim();
-                return '<tr><th style="min-width:90px;">' + k + '</th><td style="color:var(--text2);">' + v + '</td></tr>';
-              }
-              return '<tr><td colspan="2" style="color:var(--text2);">' + p + '</td></tr>';
-            }).join('')}
-          </table>`;
-        }).join('')}
+              if(idx > -1) fields[p.substring(0,idx).trim()] = p.substring(idx+1).trim();
+            });
+            const content = fields['1차 일부매도'] ? '1차 일부매도: ' + fields['1차 일부매도'] :
+                            fields['2차 일부매도'] ? '2차 일부매도: ' + fields['2차 일부매도'] :
+                            fields['3차 일부매도'] ? '3차 일부매도: ' + fields['3차 일부매도'] :
+                            Object.keys(fields).filter(k => k.includes('매도') && !['매도단가'].includes(k)).map(k => k + ': ' + fields[k]).join(', ') || '-';
+            return '<tr><td>' + e.date + '</td><td>' + content + '</td><td class="num">' + (fields['매도단가']||'-') + '</td><td class="num">' + (fields['수수료및제세금']||'-') + '</td><td class="num">' + (fields['정산금액']||'-') + '</td><td class="num" style="color:var(--green);">' + (fields['실현손익']||'-') + '</td></tr>';
+          }).join('')}</tbody>
+        </table>
       </div>` : ''}
       <div style="margin-top:10px;font-size:12px;color:var(--text2);">공모단가: ${fmt(d.price)}원 | 배정금액: ${fmt(d.alloc)}원 | 매매가능일: ${d.tradeable}</div>
     </div>`;
