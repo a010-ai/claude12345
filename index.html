@@ -6,6 +6,7 @@
 <title>IPO 공모주 일임계약 업무 대시보드</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
 <style>
 :root {
   --bg: #131825;
@@ -261,6 +262,7 @@ tbody tr:hover { background:var(--surface2); }
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
         <button onclick="exportChecklist()" style="background:var(--green-bg);border:1px solid var(--green);color:var(--green);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:6px;">&#128190; 업무일지 저장 (Excel)</button>
         <button onclick="sendTeamMail('today')" style="background:var(--blue-bg);border:1px solid var(--accent);color:var(--accent2);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:6px;">&#9993; 팀메일 발송</button>
+        <button onclick="downloadPagePdf('page-today','오늘의할일')" style="background:var(--red-bg);border:1px solid var(--red);color:var(--red);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:6px;">&#128196; PDF 다운로드</button>
         <span id="exportMsg" style="font-size:11px;color:var(--text2);"></span>
       </div>
       <div id="checklistArea"></div>
@@ -278,6 +280,7 @@ tbody tr:hover { background:var(--surface2); }
         <a href="https://calendar.google.com/calendar/r?cid=b0358280ed2bfa1daeb67a337327bda347135b557172b277247b007914b9dfd6@group.calendar.google.com" target="_blank" style="background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;text-decoration:none;display:inline-flex;align-items:center;gap:5px;margin-left:4px;">&#128279; Google Calendar</a>
         <button onclick="sendTeamMail('calendar')" style="background:var(--blue-bg);border:1px solid var(--accent);color:var(--accent2);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;display:inline-flex;align-items:center;gap:5px;">&#9993; 팀메일 발송</button>
         <button onclick="downloadCalendarExcel()" style="background:var(--green-bg);border:1px solid var(--green);color:var(--green);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;display:inline-flex;align-items:center;gap:5px;">&#128229; 엑셀 다운로드</button>
+        <button onclick="downloadPagePdf('page-calendar','캘린더일정')" style="background:var(--red-bg);border:1px solid var(--red);color:var(--red);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;display:inline-flex;align-items:center;gap:5px;">&#128196; PDF 다운로드</button>
         <span style="color:var(--text2);font-size:11px;margin-left:8px;">|</span>
         <div id="ilimToggles" style="display:flex;gap:6px;"></div>
       </div>
@@ -295,6 +298,7 @@ tbody tr:hover { background:var(--surface2); }
             <h3>전체 종목 (<span id="allCount">0</span>) <span style="font-size:11px;font-weight:400;color:var(--text2);margin-left:8px;">최종 업데이트: <span id="lastUpdate"></span></span></h3>
             <div style="display:flex;gap:6px;align-items:center;">
               <button onclick="downloadPortfolioExcel()" style="padding:6px 14px;font-size:11px;font-weight:600;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);cursor:pointer;display:flex;align-items:center;gap:4px;">&#128229; 엑셀 다운로드</button>
+              <button onclick="downloadPagePdf('page-portfolio','참여현황전체')" style="padding:6px 14px;font-size:11px;font-weight:600;border:1px solid var(--red);border-radius:6px;background:var(--red-bg);color:var(--red);cursor:pointer;display:flex;align-items:center;gap:4px;">&#128196; PDF</button>
               <div id="portfolioIlimToggles" style="display:flex;gap:6px;"></div>
             </div>
           </div>
@@ -318,7 +322,10 @@ tbody tr:hover { background:var(--surface2); }
     <div id="page-waiting" class="page">
       <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
         <div><h2>상장대기 종목</h2><p>상장일 종목 및 상장 대기 중인 종목</p></div>
-        <div id="waitingIlimToggles" style="display:flex;gap:6px;"></div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button onclick="downloadPagePdf('page-waiting','상장대기종목')" style="padding:6px 14px;font-size:11px;font-weight:600;border:1px solid var(--red);border-radius:6px;background:var(--red-bg);color:var(--red);cursor:pointer;display:flex;align-items:center;gap:4px;">&#128196; PDF</button>
+          <div id="waitingIlimToggles" style="display:flex;gap:6px;"></div>
+        </div>
       </div>
       <div class="stats-row" style="grid-template-columns:repeat(3,1fr);">
         <div class="stat-card"><div class="stat-label">상장대기 종목수</div><div class="stat-value" style="color:var(--accent2);" id="waitingCount">0</div></div>
@@ -332,7 +339,10 @@ tbody tr:hover { background:var(--surface2); }
     <div id="page-holding" class="page">
       <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
         <div><h2>보유 종목</h2><p>현재 보유 중인 종목 <span id="holdingPriceStatus" style="font-size:11px;"></span></p></div>
-        <div id="holdingIlimToggles" style="display:flex;gap:6px;"></div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button onclick="downloadPagePdf('page-holding','보유종목')" style="padding:6px 14px;font-size:11px;font-weight:600;border:1px solid var(--red);border-radius:6px;background:var(--red-bg);color:var(--red);cursor:pointer;display:flex;align-items:center;gap:4px;">&#128196; PDF</button>
+          <div id="holdingIlimToggles" style="display:flex;gap:6px;"></div>
+        </div>
       </div>
       <div id="holdingArea"></div>
     </div>
@@ -341,7 +351,10 @@ tbody tr:hover { background:var(--surface2); }
     <div id="page-partial" class="page">
       <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
         <div><h2>일부매도 종목</h2><p>일부 수량만 매도된 종목 — 전량 매도 완료 시 완료 종목으로 이동</p></div>
-        <div id="partialIlimToggles" style="display:flex;gap:6px;"></div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button onclick="downloadPagePdf('page-partial','일부매도종목')" style="padding:6px 14px;font-size:11px;font-weight:600;border:1px solid var(--red);border-radius:6px;background:var(--red-bg);color:var(--red);cursor:pointer;display:flex;align-items:center;gap:4px;">&#128196; PDF</button>
+          <div id="partialIlimToggles" style="display:flex;gap:6px;"></div>
+        </div>
       </div>
       <div class="stats-row" style="grid-template-columns:repeat(4,1fr);">
         <div class="stat-card"><div class="stat-label">일부매도 종목수</div><div class="stat-value" style="color:var(--orange);" id="partialCount">0</div></div>
@@ -356,7 +369,10 @@ tbody tr:hover { background:var(--surface2); }
     <div id="page-completed" class="page">
       <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
         <div><h2>완료 종목</h2><p>전량 매도 완료된 종목</p></div>
-        <div id="compIlimToggles" style="display:flex;gap:6px;"></div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <button onclick="downloadPagePdf('page-completed','완료종목')" style="padding:6px 14px;font-size:11px;font-weight:600;border:1px solid var(--red);border-radius:6px;background:var(--red-bg);color:var(--red);cursor:pointer;display:flex;align-items:center;gap:4px;">&#128196; PDF</button>
+          <div id="compIlimToggles" style="display:flex;gap:6px;"></div>
+        </div>
       </div>
       <div class="table-wrap">
         <div class="table-toolbar"><h3>완료 종목 (<span id="compCount">0</span>)</h3></div>
@@ -370,7 +386,10 @@ tbody tr:hover { background:var(--surface2); }
 
     <!-- 일임계약 정보 -->
     <div id="page-info" class="page">
-      <div class="page-header"><h2>일임계약 정보</h2><p>등록된 일임계약 및 설정</p></div>
+      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
+        <div><h2>일임계약 정보</h2><p>등록된 일임계약 및 설정</p></div>
+        <button onclick="downloadPagePdf('page-info','일임계약정보')" style="padding:6px 14px;font-size:11px;font-weight:600;border:1px solid var(--red);border-radius:6px;background:var(--red-bg);color:var(--red);cursor:pointer;display:flex;align-items:center;gap:4px;">&#128196; PDF</button>
+      </div>
       <div class="checklist-section" style="border-left:3px solid #3b82f6;">
         <div class="checklist-title">블랙보드일임 <span class="tag tag-green">활성</span></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;font-size:13px;padding:4px 0;">
@@ -1807,6 +1826,45 @@ function applyStatusFilter() {
   // 활성 버튼 표시 유지
   const activeEl = document.getElementById('stf-'+f);
   if(activeEl) { document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active')); activeEl.classList.add('active'); }
+}
+
+function downloadPagePdf(pageId, title) {
+  const el = document.getElementById(pageId);
+  if(!el) return;
+  const btn = event.target.closest('button');
+  const origText = btn ? btn.innerHTML : '';
+  if(btn) { btn.innerHTML = '&#8987; 생성중...'; btn.disabled = true; }
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const dateStr = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}`;
+  const opt = {
+    margin: [10, 10, 10, 10],
+    filename: `${title}_${dateStr}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#131825', scrollY: 0 },
+    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
+  };
+  const clone = el.cloneNode(true);
+  clone.style.display = 'block';
+  clone.style.width = '1200px';
+  clone.style.padding = '20px';
+  clone.style.background = '#131825';
+  clone.style.color = '#e2e8f0';
+  clone.querySelectorAll('button').forEach(b => b.remove());
+  clone.querySelectorAll('.nav-badge').forEach(b => b.remove());
+  const wrapper = document.createElement('div');
+  wrapper.style.position = 'fixed';
+  wrapper.style.left = '-9999px';
+  wrapper.style.top = '0';
+  wrapper.appendChild(clone);
+  document.body.appendChild(wrapper);
+  html2pdf().set(opt).from(clone).save().then(() => {
+    document.body.removeChild(wrapper);
+    if(btn) { btn.innerHTML = origText; btn.disabled = false; }
+  }).catch(() => {
+    document.body.removeChild(wrapper);
+    if(btn) { btn.innerHTML = origText; btn.disabled = false; }
+  });
 }
 
 function downloadPortfolioExcel() {
