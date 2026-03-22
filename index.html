@@ -1199,9 +1199,11 @@ function getStatus(d) {
     if(todayStr < ts) return 'lockup';    // 상장 후 매매가능일 전 → 락업중
     return 'sellable';                    // 매매가능일 이후 → 매도가능
   }
-  if(d.realized != null || d.totalPnl != null && !d.holding) return 'completed';
+  if(d.realized != null || (d.totalPnl != null && !d.holding)) return 'completed';
   if(todayStr < ls) return 'waiting';
   if(todayStr === ls) return 'listing-today';
+  // 상장일 이후인데 보유수량·실현손익 모두 없으면 아직 매도 전 → 매도가능
+  if(!d.holding && d.realized == null && todayStr >= ts) return 'sellable';
   return 'completed';
 }
 
@@ -1209,8 +1211,8 @@ function renderStats() {
   const totalInv = DATA.reduce((s,d) => s + (d.total||0), 0);
   const totalReal = DATA.reduce((s,d) => s + (d.realized||0), 0);
   const totalUnreal = DATA.reduce((s,d) => s + (d.unrealized||0), 0);
-  const holding = DATA.filter(d => d.holding);
-  const completed = DATA.filter(d => !d.holding);
+  const holding = DATA.filter(d => d.holding || (!d.holding && d.realized == null && getStatus(d) !== 'completed' && getStatus(d) !== 'waiting'));
+  const completed = DATA.filter(d => !d.holding && d.realized != null);
   document.getElementById('totalInvest').textContent = fmt(totalInv) + '원';
   document.getElementById('totalRealized').textContent = (totalReal >= 0 ? '+' : '') + fmt(totalReal) + '원';
   document.getElementById('totalUnrealized').textContent = (totalUnreal >= 0 ? '+' : '') + fmt(totalUnreal) + '원';
@@ -1228,8 +1230,8 @@ function renderIlimSummary() {
     const real = items.reduce((s,d) => s+(d.realized||0), 0);
     const unreal = items.reduce((s,d) => s+(d.unrealized||0), 0);
     const totalPnl = items.reduce((s,d) => s+(d.totalPnl||0), 0);
-    const holdCnt = items.filter(d => d.holding).length;
-    const compCnt = items.filter(d => !d.holding).length;
+    const holdCnt = items.filter(d => d.holding || (!d.holding && d.realized == null && getStatus(d) !== 'completed' && getStatus(d) !== 'waiting')).length;
+    const compCnt = items.filter(d => !d.holding && d.realized != null).length;
     const color = ILIM_COLORS[ilim] || '#60a5fa';
     html += `<div class="ilim-card" style="border-left-color:${color}">
       <div class="ilim-card-title"><span class="dot" style="background:${color}"></span>${ilim}</div>
