@@ -6,7 +6,6 @@
 <title>IPO 공모주 일임계약 업무 대시보드</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.2/html2pdf.bundle.min.js"></script>
 <style>
 :root {
   --bg: #131825;
@@ -262,7 +261,6 @@ tbody tr:hover { background:var(--surface2); }
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
         <button onclick="exportChecklist()" style="background:var(--green-bg);border:1px solid var(--green);color:var(--green);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:6px;">&#128190; 업무일지 저장 (Excel)</button>
         <button onclick="sendTeamMail('today')" style="background:var(--blue-bg);border:1px solid var(--accent);color:var(--accent2);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:6px;">&#9993; 팀메일 발송</button>
-        <button onclick="downloadPagePdf('page-today','오늘의할일')" style="background:var(--red-bg);border:1px solid var(--red);color:var(--red);padding:8px 16px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;display:flex;align-items:center;gap:6px;">&#128196; PDF 다운로드</button>
         <span id="exportMsg" style="font-size:11px;color:var(--text2);"></span>
       </div>
       <div id="checklistArea"></div>
@@ -280,7 +278,6 @@ tbody tr:hover { background:var(--surface2); }
         <a href="https://calendar.google.com/calendar/r?cid=b0358280ed2bfa1daeb67a337327bda347135b557172b277247b007914b9dfd6@group.calendar.google.com" target="_blank" style="background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;text-decoration:none;display:inline-flex;align-items:center;gap:5px;margin-left:4px;">&#128279; Google Calendar</a>
         <button onclick="sendTeamMail('calendar')" style="background:var(--blue-bg);border:1px solid var(--accent);color:var(--accent2);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;display:inline-flex;align-items:center;gap:5px;">&#9993; 팀메일 발송</button>
         <button onclick="downloadCalendarExcel()" style="background:var(--green-bg);border:1px solid var(--green);color:var(--green);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;display:inline-flex;align-items:center;gap:5px;">&#128229; 엑셀 다운로드</button>
-        <button onclick="downloadPagePdf('page-calendar','캘린더일정')" style="background:var(--red-bg);border:1px solid var(--red);color:var(--red);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;font-family:'Noto Sans KR',sans-serif;display:inline-flex;align-items:center;gap:5px;">&#128196; PDF 다운로드</button>
         <span style="color:var(--text2);font-size:11px;margin-left:8px;">|</span>
         <div id="ilimToggles" style="display:flex;gap:6px;"></div>
       </div>
@@ -298,7 +295,6 @@ tbody tr:hover { background:var(--surface2); }
             <h3>전체 종목 (<span id="allCount">0</span>) <span style="font-size:11px;font-weight:400;color:var(--text2);margin-left:8px;">최종 업데이트: <span id="lastUpdate"></span></span></h3>
             <div style="display:flex;gap:6px;align-items:center;">
               <button onclick="downloadPortfolioExcel()" style="padding:6px 14px;font-size:11px;font-weight:600;border:1px solid var(--border);border-radius:6px;background:var(--surface2);color:var(--text);cursor:pointer;display:flex;align-items:center;gap:4px;">&#128229; 엑셀 다운로드</button>
-              <button onclick="downloadPagePdf('page-portfolio','참여현황전체')" style="padding:6px 14px;font-size:11px;font-weight:600;border:1px solid var(--red);border-radius:6px;background:var(--red-bg);color:var(--red);cursor:pointer;display:flex;align-items:center;gap:4px;">&#128196; PDF</button>
               <div id="portfolioIlimToggles" style="display:flex;gap:6px;"></div>
             </div>
           </div>
@@ -312,7 +308,7 @@ tbody tr:hover { background:var(--surface2); }
         </div>
         <div class="table-scroll">
           <table><thead><tr>
-            <th>순번</th><th>일임</th><th>종목명</th><th>주관사</th><th>공모단가</th><th>배정수량</th><th>배정금액</th><th>투자총액</th><th>상장일</th><th>락업</th><th>보유</th><th>실현손익</th><th>평가손익</th><th>전일종가</th><th>총손익</th><th>수익률</th><th>상태</th>
+            <th>순번</th><th>일임</th><th>종목명</th><th>주관사</th><th>공모단가</th><th>배정수량</th><th>배정금액</th><th>투자총액</th><th>상장일</th><th>락업</th><th>보유</th><th>매도단가</th><th>실현손익</th><th>평가손익</th><th>전일종가</th><th>총손익</th><th>수익률</th><th>상태</th>
           </tr></thead><tbody id="tableBody"></tbody></table>
         </div>
       </div>
@@ -322,10 +318,7 @@ tbody tr:hover { background:var(--surface2); }
     <div id="page-waiting" class="page">
       <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
         <div><h2>상장대기 종목</h2><p>상장일 종목 및 상장 대기 중인 종목</p></div>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <button onclick="downloadPagePdf('page-waiting','상장대기종목')" style="padding:6px 14px;font-size:11px;font-weight:600;border:1px solid var(--red);border-radius:6px;background:var(--red-bg);color:var(--red);cursor:pointer;display:flex;align-items:center;gap:4px;">&#128196; PDF</button>
-          <div id="waitingIlimToggles" style="display:flex;gap:6px;"></div>
-        </div>
+        <div id="waitingIlimToggles" style="display:flex;gap:6px;"></div>
       </div>
       <div class="stats-row" style="grid-template-columns:repeat(3,1fr);">
         <div class="stat-card"><div class="stat-label">상장대기 종목수</div><div class="stat-value" style="color:var(--accent2);" id="waitingCount">0</div></div>
@@ -339,10 +332,7 @@ tbody tr:hover { background:var(--surface2); }
     <div id="page-holding" class="page">
       <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
         <div><h2>보유 종목</h2><p>현재 보유 중인 종목 <span id="holdingPriceStatus" style="font-size:11px;"></span></p></div>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <button onclick="downloadPagePdf('page-holding','보유종목')" style="padding:6px 14px;font-size:11px;font-weight:600;border:1px solid var(--red);border-radius:6px;background:var(--red-bg);color:var(--red);cursor:pointer;display:flex;align-items:center;gap:4px;">&#128196; PDF</button>
-          <div id="holdingIlimToggles" style="display:flex;gap:6px;"></div>
-        </div>
+        <div id="holdingIlimToggles" style="display:flex;gap:6px;"></div>
       </div>
       <div id="holdingArea"></div>
     </div>
@@ -351,10 +341,7 @@ tbody tr:hover { background:var(--surface2); }
     <div id="page-partial" class="page">
       <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
         <div><h2>일부매도 종목</h2><p>일부 수량만 매도된 종목 — 전량 매도 완료 시 완료 종목으로 이동</p></div>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <button onclick="downloadPagePdf('page-partial','일부매도종목')" style="padding:6px 14px;font-size:11px;font-weight:600;border:1px solid var(--red);border-radius:6px;background:var(--red-bg);color:var(--red);cursor:pointer;display:flex;align-items:center;gap:4px;">&#128196; PDF</button>
-          <div id="partialIlimToggles" style="display:flex;gap:6px;"></div>
-        </div>
+        <div id="partialIlimToggles" style="display:flex;gap:6px;"></div>
       </div>
       <div class="stats-row" style="grid-template-columns:repeat(4,1fr);">
         <div class="stat-card"><div class="stat-label">일부매도 종목수</div><div class="stat-value" style="color:var(--orange);" id="partialCount">0</div></div>
@@ -369,16 +356,13 @@ tbody tr:hover { background:var(--surface2); }
     <div id="page-completed" class="page">
       <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
         <div><h2>완료 종목</h2><p>전량 매도 완료된 종목</p></div>
-        <div style="display:flex;gap:6px;align-items:center;">
-          <button onclick="downloadPagePdf('page-completed','완료종목')" style="padding:6px 14px;font-size:11px;font-weight:600;border:1px solid var(--red);border-radius:6px;background:var(--red-bg);color:var(--red);cursor:pointer;display:flex;align-items:center;gap:4px;">&#128196; PDF</button>
-          <div id="compIlimToggles" style="display:flex;gap:6px;"></div>
-        </div>
+        <div id="compIlimToggles" style="display:flex;gap:6px;"></div>
       </div>
       <div class="table-wrap">
         <div class="table-toolbar"><h3>완료 종목 (<span id="compCount">0</span>)</h3></div>
         <div class="table-scroll">
           <table><thead><tr>
-            <th>순번</th><th>일임</th><th>종목명</th><th>공모단가</th><th>배정금액</th><th>실현손익</th><th>수익률</th><th>매도내역</th>
+            <th>순번</th><th>일임</th><th>종목명</th><th>공모단가</th><th>배정금액</th><th>매도단가</th><th>실현손익</th><th>수익률</th><th>매도내역</th>
           </tr></thead><tbody id="compBody"></tbody></table>
         </div>
       </div>
@@ -386,10 +370,7 @@ tbody tr:hover { background:var(--surface2); }
 
     <!-- 일임계약 정보 -->
     <div id="page-info" class="page">
-      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
-        <div><h2>일임계약 정보</h2><p>등록된 일임계약 및 설정</p></div>
-        <button onclick="downloadPagePdf('page-info','일임계약정보')" style="padding:6px 14px;font-size:11px;font-weight:600;border:1px solid var(--red);border-radius:6px;background:var(--red-bg);color:var(--red);cursor:pointer;display:flex;align-items:center;gap:4px;">&#128196; PDF</button>
-      </div>
+      <div class="page-header"><h2>일임계약 정보</h2><p>등록된 일임계약 및 설정</p></div>
       <div class="checklist-section" style="border-left:3px solid #3b82f6;">
         <div class="checklist-title">블랙보드일임 <span class="tag tag-green">활성</span></div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;font-size:13px;padding:4px 0;">
@@ -822,10 +803,10 @@ const DATA = [
     "tradeable": "2026-01-29",
     "holding": 343,
     "realized": 5008960,
-    "unrealized": 2486750,
-    "totalPnl": 7495710,
-    "closePrice": 31250,
-    "returnRate": "37.05%"
+    "unrealized": -10850950,
+    "totalPnl": -10850950,
+    "closePrice": 27350,
+    "returnRate": "-53.6%"
   },
   {
     "seq": 17,
@@ -1082,10 +1063,10 @@ const DATA = [
     "tradeable": "2026-03-24",
     "holding": 120,
     "realized": null,
-    "unrealized": 88800,
-    "totalPnl": 88800,
-    "closePrice": 17740,
-    "returnRate": "4.35%"
+    "unrealized": 1200,
+    "totalPnl": 1200,
+    "closePrice": 17010,
+    "returnRate": "0.1%"
   },
   {
     "seq": 7,
@@ -1199,11 +1180,9 @@ function getStatus(d) {
     if(todayStr < ts) return 'lockup';    // 상장 후 매매가능일 전 → 락업중
     return 'sellable';                    // 매매가능일 이후 → 매도가능
   }
-  if(d.realized != null || (d.totalPnl != null && !d.holding)) return 'completed';
+  if(d.realized != null || d.totalPnl != null && !d.holding) return 'completed';
   if(todayStr < ls) return 'waiting';
   if(todayStr === ls) return 'listing-today';
-  // 상장일 이후인데 보유수량·실현손익 모두 없으면 아직 매도 전 → 매도가능
-  if(!d.holding && d.realized == null && todayStr >= ts) return 'sellable';
   return 'completed';
 }
 
@@ -1211,8 +1190,8 @@ function renderStats() {
   const totalInv = DATA.reduce((s,d) => s + (d.total||0), 0);
   const totalReal = DATA.reduce((s,d) => s + (d.realized||0), 0);
   const totalUnreal = DATA.reduce((s,d) => s + (d.unrealized||0), 0);
-  const holding = DATA.filter(d => d.holding || (!d.holding && d.realized == null && getStatus(d) !== 'completed' && getStatus(d) !== 'waiting'));
-  const completed = DATA.filter(d => !d.holding && d.realized != null);
+  const holding = DATA.filter(d => d.holding);
+  const completed = DATA.filter(d => !d.holding);
   document.getElementById('totalInvest').textContent = fmt(totalInv) + '원';
   document.getElementById('totalRealized').textContent = (totalReal >= 0 ? '+' : '') + fmt(totalReal) + '원';
   document.getElementById('totalUnrealized').textContent = (totalUnreal >= 0 ? '+' : '') + fmt(totalUnreal) + '원';
@@ -1230,8 +1209,8 @@ function renderIlimSummary() {
     const real = items.reduce((s,d) => s+(d.realized||0), 0);
     const unreal = items.reduce((s,d) => s+(d.unrealized||0), 0);
     const totalPnl = items.reduce((s,d) => s+(d.totalPnl||0), 0);
-    const holdCnt = items.filter(d => d.holding || (!d.holding && d.realized == null && getStatus(d) !== 'completed' && getStatus(d) !== 'waiting')).length;
-    const compCnt = items.filter(d => !d.holding && d.realized != null).length;
+    const holdCnt = items.filter(d => d.holding).length;
+    const compCnt = items.filter(d => !d.holding).length;
     const color = ILIM_COLORS[ilim] || '#60a5fa';
     html += `<div class="ilim-card" style="border-left-color:${color}">
       <div class="ilim-card-title"><span class="dot" style="background:${color}"></span>${ilim}</div>
@@ -1745,8 +1724,8 @@ function copyMailBody(source) {
   });
 }
 
-const LAST_UPDATE = '2026-03-20 15:30';
-const PRICE_UPDATE = '2026-03-20 09:43';  // 종가 다운로드 반영 시점 (빈값=미반영)
+const LAST_UPDATE = '2026-03-29 14:52';
+const PRICE_UPDATE = '2026-03-29 14:52';  // 종가 다운로드 반영 시점 (빈값=미반영)
 const SHEETS_URL = 'https://docs.google.com/spreadsheets/d/1_QEDbped1355C1uUZVwjQqKAF_-bGpfWO1YIg6hDTfs/edit';
 const GITHUB_LAST_COMMIT = '2026-03-20 09:43 | Naver closing price update 2026-03-20 09:43';
 const BOT_LAST_START = '2026-03-19 14:38';
@@ -1784,7 +1763,7 @@ function renderTable() {
   document.getElementById('lastUpdate').textContent = LAST_UPDATE;
   document.getElementById('lastUpdateToday').textContent = LAST_UPDATE;
   document.getElementById('lastUpdateCal').textContent = LAST_UPDATE;
-  body.innerHTML = filtered.map((d, idx) => {
+  body.innerHTML = filtered.map(d => {
     const st = getStatus(d);
     const stLabel = st==='completed' ? '완료' : st==='lockup' ? '락업중' : st==='sellable' ? '매도가능' : st==='listing-today' ? '상장일' : '상장대기';
     const stClass = st==='completed' ? 'completed' : st==='lockup' || st==='sellable' ? 'holding' : st==='listing-today' ? 'listing-today' : 'waiting';
@@ -1794,10 +1773,11 @@ function renderTable() {
     const ilimShort = (d.ilim||'').replace('일임','');
     const ilimColor = ILIM_COLORS[d.ilim] || '#60a5fa';
     return `<tr data-status="${st}">
-      <td>${idx + 1}</td><td><span class="tag" style="font-size:9px;background:${ilimColor}22;color:${ilimColor};">${ilimShort}</span></td><td>${d.name}</td><td>${d.broker}</td>
+      <td>${d.seq}</td><td><span class="tag" style="font-size:9px;background:${ilimColor}22;color:${ilimColor};">${ilimShort}</span></td><td>${d.name}</td><td>${d.broker}</td>
       <td class="num">${fmt(d.price)}</td><td class="num">${fmt(d.qty)}</td>
       <td class="num">${fmt(d.alloc)}</td><td class="num">${fmt(d.total)}</td>
       <td>${d.listing}</td><td>${d.lockup}</td><td class="num">${d.holding||'-'}</td>
+      <td class="num">${(()=>{const sp=calcWeightedSellPrice(getSellEvents(d.name),d.qty);return sp?fmt(sp):'-';})()}</td>
       <td class="num ${realClass}">${fmt(d.realized)}</td>
       <td class="num ${unrealClass}">${fmt(d.unrealized)}</td>
       <td class="num">${d.closePrice ? fmt(d.closePrice)+'원' : '-'}</td>
@@ -1828,45 +1808,6 @@ function applyStatusFilter() {
   // 활성 버튼 표시 유지
   const activeEl = document.getElementById('stf-'+f);
   if(activeEl) { document.querySelectorAll('.filter-tab').forEach(t=>t.classList.remove('active')); activeEl.classList.add('active'); }
-}
-
-function downloadPagePdf(pageId, title) {
-  const el = document.getElementById(pageId);
-  if(!el) return;
-  const btn = event.target.closest('button');
-  const origText = btn ? btn.innerHTML : '';
-  if(btn) { btn.innerHTML = '&#8987; 생성중...'; btn.disabled = true; }
-  const now = new Date();
-  const pad = n => String(n).padStart(2,'0');
-  const dateStr = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}`;
-  const opt = {
-    margin: [10, 10, 10, 10],
-    filename: `${title}_${dateStr}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: { scale: 2, useCORS: true, backgroundColor: '#131825', scrollY: 0 },
-    jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-  };
-  const clone = el.cloneNode(true);
-  clone.style.display = 'block';
-  clone.style.width = '1200px';
-  clone.style.padding = '20px';
-  clone.style.background = '#131825';
-  clone.style.color = '#e2e8f0';
-  clone.querySelectorAll('button').forEach(b => b.remove());
-  clone.querySelectorAll('.nav-badge').forEach(b => b.remove());
-  const wrapper = document.createElement('div');
-  wrapper.style.position = 'fixed';
-  wrapper.style.left = '-9999px';
-  wrapper.style.top = '0';
-  wrapper.appendChild(clone);
-  document.body.appendChild(wrapper);
-  html2pdf().set(opt).from(clone).save().then(() => {
-    document.body.removeChild(wrapper);
-    if(btn) { btn.innerHTML = origText; btn.disabled = false; }
-  }).catch(() => {
-    document.body.removeChild(wrapper);
-    if(btn) { btn.innerHTML = origText; btn.disabled = false; }
-  });
 }
 
 function downloadPortfolioExcel() {
@@ -2067,19 +2008,8 @@ function renderPartial() {
       <div style="margin-top:12px;">
         <div class="ilim-section-title">매도 내역</div>
         <table class="ilim-mini-table" style="margin-top:6px;">
-          <thead><tr><th>매도일자</th><th>내용</th><th>매도단가</th><th>수수료및제세금</th><th>정산금액</th><th>실현손익</th></tr></thead>
-          <tbody>${sellEvents.map(e => {
-            const fields = {};
-            e.desc.split(/\s*\|\s*/).forEach(p => {
-              const idx = p.indexOf(':');
-              if(idx > -1) fields[p.substring(0,idx).trim()] = p.substring(idx+1).trim();
-            });
-            const content = fields['1차 일부매도'] ? '1차 일부매도: ' + fields['1차 일부매도'] :
-                            fields['2차 일부매도'] ? '2차 일부매도: ' + fields['2차 일부매도'] :
-                            fields['3차 일부매도'] ? '3차 일부매도: ' + fields['3차 일부매도'] :
-                            Object.keys(fields).filter(k => k.includes('매도') && !['매도단가'].includes(k)).map(k => k + ': ' + fields[k]).join(', ') || '-';
-            return '<tr><td>' + e.date + '</td><td>' + content + '</td><td class="num">' + (fields['매도단가']||'-') + '</td><td class="num">' + (fields['수수료및제세금']||'-') + '</td><td class="num">' + (fields['정산금액']||'-') + '</td><td class="num" style="color:var(--green);">' + (fields['실현손익']||'-') + '</td></tr>';
-          }).join('')}</tbody>
+          <tr><th style="min-width:90px;">매도일자</th><th>내용</th></tr>
+          ${sellEvents.map(e => `<tr><td>${e.date}</td><td style="color:var(--text2);white-space:normal;line-height:1.6;">${e.desc}</td></tr>`).join('')}
         </table>
       </div>` : ''}
       <div style="margin-top:10px;font-size:12px;color:var(--text2);">공모단가: ${fmt(d.price)}원 | 배정금액: ${fmt(d.alloc)}원 | 매매가능일: ${d.tradeable}</div>
@@ -2087,10 +2017,29 @@ function renderPartial() {
   }).join('');
 }
 
+function calcWeightedSellPrice(sellEvents, totalQty) {
+  // sellEvents desc에서 매도단가와 수량 추출 후 가중평균
+  const parsed = [];
+  sellEvents.forEach(e => {
+    const priceMatch = e.desc.match(/매도단가[:\s]*([0-9,]+)원/);
+    if(!priceMatch) return;
+    const price = parseInt(priceMatch[1].replace(/,/g,''));
+    // 일부매도: "1차 일부매도: 100주" 또는 수량 패턴
+    const qtyMatch = e.desc.match(/일부매도[:\s]*([0-9,]+)주/);
+    const qty = qtyMatch ? parseInt(qtyMatch[1].replace(/,/g,'')) : totalQty;
+    parsed.push({price, qty});
+  });
+  if(!parsed.length) return null;
+  if(parsed.length === 1) return parsed[0].price;
+  const totalSoldQty = parsed.reduce((s,p) => s + p.qty, 0);
+  if(!totalSoldQty) return null;
+  return Math.round(parsed.reduce((s,p) => s + p.price * p.qty, 0) / totalSoldQty);
+}
+
 function renderCompleted() {
   const comp = getFilteredData('completed').filter(d => !d.holding && d.realized);
   document.getElementById('compCount').textContent = comp.length;
-  document.getElementById('compBody').innerHTML = comp.map((d, idx) => {
+  document.getElementById('compBody').innerHTML = comp.map(d => {
     const ilimShort = (d.ilim||'').replace('일임','');
     const sellEvents = getSellEvents(d.name);
     let sellInfo = '-';
@@ -2099,10 +2048,14 @@ function renderCompleted() {
     } else if(d.closePrice) {
       sellInfo = `<span style="color:var(--text2);">매도가 ${fmt(d.closePrice)}원</span>`;
     }
+    // 매도단가 (가중평균)
+    const avgSellPrice = calcWeightedSellPrice(sellEvents, d.qty);
+    const sellPriceStr = avgSellPrice ? fmt(avgSellPrice) : '-';
     const ilimColor = ILIM_COLORS[d.ilim] || '#60a5fa';
     return `<tr>
-    <td>${idx + 1}</td><td><span class="tag" style="font-size:9px;background:${ilimColor}22;color:${ilimColor};">${ilimShort}</span></td><td>${d.name}</td><td class="num">${fmt(d.price)}</td>
+    <td>${d.seq}</td><td><span class="tag" style="font-size:9px;background:${ilimColor}22;color:${ilimColor};">${ilimShort}</span></td><td>${d.name}</td><td class="num">${fmt(d.price)}</td>
     <td class="num">${fmt(d.alloc)}</td>
+    <td class="num">${sellPriceStr}</td>
     <td class="num pnl-pos">${fmt(d.realized)}</td>
     <td class="num">${d.returnRate}</td>
     <td style="font-size:11px;color:var(--text2);max-width:260px;">${sellInfo}</td>
